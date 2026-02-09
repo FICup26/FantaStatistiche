@@ -1,0 +1,2335 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fanta Statistiche PRO</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --sisal-green: #a3ff00; 
+            --neon-blue: #00d4ff;
+            --dark-bg: #0b0d0f; 
+            --card-bg: #161a1e; 
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--dark-bg); color: white; font-family: 'Inter', sans-serif; margin: 0; overflow-x: hidden; height: 100vh; }
+
+        /* --- HOME SCREEN --- */
+        #page-home { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            text-align: center; height: 100vh; position: fixed; width: 100%; z-index: 2000;
+            background: radial-gradient(circle at center, #1a1f24 0%, #0b0d0f 100%);
+        }
+        .hero-title { font-family: 'Oswald'; font-size: 50px; line-height: 0.8; color: var(--sisal-green); text-shadow: 0 0 20px rgba(163, 255, 0, 0.4); margin-bottom: 30px; }
+        .btn-enter { 
+            background: white; color: black; padding: 20px 60px; border-radius: 50px; 
+            font-family: 'Oswald'; font-size: 26px; border: none; cursor: pointer; 
+            box-shadow: 0 10px 30px rgba(163, 255, 0, 0.3); transition: 0.4s;
+        }
+        .btn-enter:hover { transform: scale(1.05); background: var(--sisal-green); }
+
+        /* --- LAYOUT PRINCIPALE --- */
+        #main-app { display: none; }
+        .navbar { 
+            position: fixed; bottom: 0; width: 100%; background: rgba(22, 26, 30, 0.95); 
+            display: flex; justify-content: space-around; padding: 15px; 
+            border-top: 1px solid #333; z-index: 1000; backdrop-filter: blur(10px);
+        }
+        .nav-item { color: #666; font-size: 12px; text-align: center; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
+        .nav-item.active { color: var(--sisal-green); text-shadow: 0 0 10px var(--sisal-green); }
+
+        .content { padding: 20px; padding-bottom: 100px; }
+
+        /* --- RICERCA SPETTACOLARE --- */
+        .search-container { position: relative; margin-bottom: 25px; }
+        .spectacular-input { 
+            width: 100%; background: #1a1f24; border: 2px solid #333; color: white; 
+            padding: 16px 20px; border-radius: 15px; font-size: 16px; outline: none;
+            transition: 0.3s; border-left: 5px solid var(--sisal-green);
+        }
+        .spectacular-input:focus { border-color: var(--sisal-green); box-shadow: 0 0 15px rgba(163, 255, 0, 0.2); }
+        
+        #suggestions { 
+            position: absolute; top: 65px; left: 0; right: 0; background: #1a1f24; 
+            border-radius: 15px; border: 1px solid #333; z-index: 100; max-height: 250px; overflow-y: auto; display: none;
+        }
+        .suggest-item { padding: 15px; border-bottom: 1px solid #252a30; font-weight: 600; cursor: pointer; }
+        .suggest-item:hover { background: var(--sisal-green); color: black; }
+
+        /* --- STATISTICHE TABELLA --- */
+        .stats-table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 15px; overflow: hidden; }
+        .stats-table th { background: #222; color: var(--sisal-green); padding: 15px; text-align: left; font-size: 12px; }
+        .stats-table td { padding: 12px 15px; border-bottom: 1px solid #252a30; font-size: 13px; }
+        .mini-player-img { 
+    width: 35px; 
+    height: 35px; 
+    border-radius: 50% !important; 
+    background: #333; 
+    margin-right: 12px; 
+    vertical-align: middle; 
+    object-fit: cover; 
+    border: 2px solid var(--sisal-green);
+}
+
+/* --- BARRA LOGHI SPETTACOLARE (SFONDO BIANCO) --- */
+.team-bar-container {
+    background: white; /* Sfondo bianco solido per far risaltare i colori */
+    margin: -20px -20px 20px -20px; /* Annulla il padding del content per andare a bordo schermo */
+    padding: 15px 0;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border-bottom: 3px solid var(--sisal-green);
+}
+
+.team-bar { 
+    display: flex; 
+    align-items: center; 
+    overflow-x: auto; 
+    gap: 20px; 
+    padding: 0 20px;      
+    scrollbar-width: none; 
+}
+
+.team-bar::-webkit-scrollbar { display: none; }
+
+/* LOGO "TUTTE" (SCUDETTO) FISSO A SINISTRA */
+
+
+/* LOGHI DELLE SQUADRE BASE */
+.team-logo-btn { 
+    width: 45px; 
+    height: 45px; 
+    cursor: pointer; 
+    transition: all 0.3s ease; 
+    flex-shrink: 0; 
+    object-fit: contain; 
+    opacity: 0.4;        /* Spento di base */
+    filter: grayscale(1); /* Grigio di base */
+    border: 2px solid transparent; /* Cerchio invisibile */
+    border-radius: 50%;
+    padding: 4px;
+}
+
+/* LOGO QUANDO CLICCATO (ACTIVE) */
+.team-logo-btn.active { 
+    opacity: 1; 
+    filter: grayscale(0); /* Torna a colori */
+    transform: scale(1.1); 
+    border: 2px solid var(--sisal-green); /* Appare il cerchio verde */
+    background: white; /* Sfondo bianco per far risaltare il logo */
+}
+
+
+/* NAVBAR CYBER-LUXURY - CENTRATA E SPOSTATA A SINISTRA */
+.navbar { 
+    position: fixed; 
+    bottom: 0px; 
+    
+    /* MODIFICA QUI: */
+    left: 50%; /* Il 50% sarebbe il centro spaccato, 50% la tira a sinistra */
+    transform: translateX(-50%); /* Questo comando è fondamentale per la centratura */
+    width: 95%; /* Definisci quanto deve essere larga la barra */
+    
+    height: 75px;
+    background: linear-gradient(145deg, rgba(20, 24, 28, 0.98), rgba(10, 12, 14, 0.95));
+    display: flex; 
+    justify-content: space-around; 
+    align-items: center;
+    border-radius: 20px 20px 0 0; /* Tolto l'arrotondamento sotto se bottom è 0 */
+    border-top: 1px solid rgba(163, 255, 0, 0.3);
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    z-index: 2000;
+    box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.8), 0 0 15px rgba(163, 255, 0, 0.05);
+    padding: 0 5px;
+}
+
+
+.nav-item { 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #555; 
+    cursor: pointer; 
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    flex: 1;
+    height: 100%;
+}
+
+/* Testo sotto le icone */
+.nav-text {
+    font-family: 'Oswald';
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 4px;
+    transition: 0.3s;
+}
+
+/* Icona attiva con Glow */
+.nav-item.active { 
+    color: var(--sisal-green); 
+}
+
+.nav-item.active .nav-icon {
+    filter: drop-shadow(0 0 8px var(--sisal-green));
+    transform: translateY(-3px) scale(1.1);
+}
+
+.nav-item.active .nav-text {
+    color: white;
+    letter-spacing: 2px;
+    text-shadow: 0 0 5px var(--sisal-green);
+}
+
+/* TASTO CENTRALE: THE MASTER HUB */
+.round-btn-container { 
+    position: relative; 
+    top: -30px; 
+    flex: 0 0 85px; 
+    z-index: 2001;
+}
+
+.pitch-round-btn {
+    width: 75px; height: 75px; 
+    background: #000;
+    border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--sisal-green);
+    box-shadow: 0 0 20px rgba(163, 255, 0, 0.4), inset 0 0 15px rgba(163, 255, 0, 0.2);
+    font-size: 32px;
+    transition: 0.4s;
+}
+
+/* Cerchio rotante attorno al tasto centrale */
+.round-btn-container::before {
+    content: '';
+    position: absolute;
+    top: -5px; left: -5px; right: -5px; bottom: -5px;
+    border: 2px dashed var(--sisal-green);
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: rotateHub 10s linear infinite;
+}
+
+@keyframes rotateHub {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.pitch-round-btn:hover {
+    box-shadow: 0 0 30px var(--sisal-green);
+    transform: scale(1.05);
+}
+
+
+
+
+/* LOGHI DELLE SQUADRE CHE SCORRONO */
+.team-logo-btn { 
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); /* Ombra morbida invece di bordo */
+    border-radius: 8px;
+    padding: 5px;
+}
+
+
+.team-logo-btn.active { 
+    opacity: 1; 
+    transform: scale(1.1); 
+}
+
+
+
+
+/* Quando il logo è cliccato (Active) */
+.team-logo-btn.active { 
+    opacity: 1; 
+    filter: grayscale(0);
+    transform: scale(1.1); 
+}
+
+
+
+ /* --- CARD SISAL COMPATTE --- */
+.card { 
+    width: 300px; 
+    background: var(--sisal-green); 
+    border-radius: 25px; 
+    padding: 12px; 
+    color: black; 
+    margin: 10px auto; 
+    position: relative; 
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    overflow: hidden;
+}
+.card.flop { background: #ff0044; color: white; }
+
+/* Titoli rimpiccioliti */
+.card-header { text-align: center; font-family: 'Oswald'; line-height: 1; margin-bottom: 5px; }
+.header-ficup { font-size: 10px; opacity: 0.7; letter-spacing: 1px; }
+.header-predictor { font-size: 18px; } 
+
+/* Fix per contenitore immagine perfetto */
+.circle-frame { 
+    width: 100px; 
+    height: 100px; 
+    background: white; 
+    border-radius: 50%; 
+    border: 3px solid black; 
+    overflow: hidden; /* Fondamentale: taglia ciò che esce */
+    margin: 0 auto 5px; 
+    position: relative; /* Per posizionamento interno */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.circle-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Evita che la foto si deformi */
+    display: block;
+}
+
+/* Fix specifico per i loghi delle squadre (non devono essere tagliati) */
+.circle-frame img.logo-fallback {
+    width: 70% !important; /* Più piccolo per non toccare i bordi */
+    height: 70% !important;
+    object-fit: contain !important; /* Mantiene le proporzioni del logo */
+}
+
+
+.player-name { 
+    font-family: 'Oswald'; 
+    font-size: 26px; /* Leggermente ridotto per stare su una riga */
+    text-align: center; 
+    text-transform: uppercase; 
+    line-height: 0.9; 
+    margin: 3px 0; 
+}
+
+/* Nuova zona Team: Logo sopra, Nome sotto */
+.team-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 8px 0;
+}
+.team-logo-mini { 
+    width: 35px !important; 
+    height: 35px !important; 
+    object-fit: contain !important; 
+    flex-shrink: 0 !important; /* Impedisce al flexbox di schiacciare il logo */
+    display: block !important;
+    margin: 0 auto 4px auto !important;
+    background: transparent !important;
+}
+
+.stats-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 4px; 
+    background: rgba(0,0,0,0.08); 
+    padding: 8px; 
+    border-radius: 12px; 
+    margin-top: 5px; 
+}
+
+.stat-item { text-align: center; font-size: 9px; font-weight: 900; }
+.stat-val { display: block; font-size: 16px; font-family: 'Oswald'; }
+
+.badge-black { 
+    background: black; 
+    color: var(--sisal-green); 
+    padding: 8px; 
+    border-radius: 12px; 
+    text-align: center; 
+    font-family: 'Oswald'; 
+    font-size: 20px; 
+    margin-top: 8px; 
+}
+
+
+        
+        .admin-login-box { text-align: center; padding-top: 50px; }
+        .hidden { display: none; }
+        
+       
+
+.role-bar { display: flex; justify-content: center; gap: 8px; margin: 15px 0; }
+.role-btn { background: #333; border: none; color: white; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 12px; font-weight: 800; }
+.role-btn.active { background: var(--sisal-green); color: black; }
+
+/* Modale per visualizzare la card */
+#modal-card { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:5000; display:none; justify-content:center; align-items:center; overflow-y: auto; }
+
+/* Pulsante Navbar Rotondo */
+.round-btn-container { position: relative; top: -20px; flex: 0 0 70px; }
+.pitch-round-btn {
+    width: 60px; height: 60px; background: var(--sisal-green);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 30px; border: 4px solid var(--dark-bg);
+    box-shadow: 0 0 20px rgba(163, 255, 0, 0.5); transition: 0.3s;
+}
+
+/* Stadio e Campo */
+.stadium-container {
+    position: relative; width: 100%; height: 75vh;
+    background: #064e06; border-radius: 20px; overflow: hidden;
+    background: radial-gradient(circle at center, #0a5d0a 0%, #052b05 100%);
+    border: 2px solid #ffffff33;
+}
+
+/* Luci in movimento */
+.lights {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: conic-gradient(from 180deg at 50% 0%, transparent, rgba(255,255,255,0.1), transparent);
+    animation: sweep 5s infinite alternate ease-in-out; pointer-events: none;
+}
+@keyframes sweep { 
+    from { transform: rotate(-30deg); } 
+    to { transform: rotate(30deg); } 
+}
+
+/* Linee del campo */
+.football-pitch {
+    display: flex; flex-direction: column; justify-content: space-around;
+    height: 100%; padding: 20px 0; background: repeating-linear-gradient(0deg, #0a5d0a 0, #0a5d0a 10%, #0c6b0c 10%, #0c6b0c 20%);
+}
+
+.pitch-row { display: flex; justify-content: space-around; width: 100%; }
+
+/* Calciatore sul campo */
+.pitch-player {
+    display: flex; flex-direction: column; align-items: center; width: 70px;
+}
+.pitch-player-img {
+    width: 45px; height: 45px; border-radius: 50%; border: 2px solid white;
+    background: #333; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+.pitch-player-name {
+    font-size: 10px; font-weight: 900; background: black; color: white;
+    padding: 2px 5px; border-radius: 5px; margin-top: 5px;
+    white-space: nowrap; text-transform: uppercase;
+}
+/* Contenitore per le linee */
+.pitch-lines {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Area di Rigore Superiore */
+.penalty-area {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 12%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: none;
+}
+
+/* AGGIUNGI QUESTA: Area di Rigore Inferiore */
+.penalty-area-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 12%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-bottom: none;
+}
+
+
+/* Cerchio di Centrocampo */
+.center-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+}
+
+/* Linea di metà campo */
+.center-circle::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: -100px; right: -100px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Miglioria al pulsante Bacchetta Magica */
+.pitch-round-btn {
+    background: linear-gradient(135deg, var(--sisal-green), #86d100) !important;
+    font-size: 28px !important;
+    animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+    from { box-shadow: 0 0 10px rgba(163, 255, 0, 0.4); }
+    to { box-shadow: 0 0 25px rgba(163, 255, 0, 0.8); }
+}
+/* Stile base per le immagini sul campo */
+.pitch-player-img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid white;
+    object-fit: cover;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Specifica per quando appare il logo della squadra al posto della foto */
+.logo-fallback {
+    background-color: white !important; /* Sfondo bianco pulito */
+    object-fit: contain !important;    /* Il logo non viene tagliato */
+    padding: 5px;                      /* Distanza dai bordi del cerchio */
+    box-sizing: border-box;
+}
+/* Stadio Flop: Sfondo Rosso scuro */
+.stadium-flop {
+    background: radial-gradient(circle at center, #5d0a0a 0%, #2b0505 100%) !important;
+    border-color: #ff004466 !important;
+}
+
+/* Erba Rossa a strisce */
+.pitch-flop {
+    background: repeating-linear-gradient(0deg, #5d0a0a 0, #5d0a0a 10%, #6b0c0c 10%, #6b0c0c 20%) !important;
+}
+
+/* Luci rosse in movimento */
+.lights-flop {
+    background: conic-gradient(from 180deg at 50% 0%, transparent, rgba(255, 0, 68, 0.15), transparent) !important;
+}
+
+/* Nome del giocatore nel Flop 11 */
+.pitch-flop .pitch-player-name {
+    background: #ff0044 !important;
+}
+.switch-btn {
+    background: #222;
+    border: 2px solid #444;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-family: 'Oswald';
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.switch-btn.active {
+    background: var(--sisal-green);
+    color: black;
+    border-color: var(--sisal-green);
+    box-shadow: 0 0 10px rgba(163, 255, 0, 0.4);
+}
+#btn-show-flop.active {
+    background: #ff0044;
+    color: white;
+    border-color: #ff0044;
+    box-shadow: 0 0 10px rgba(255, 0, 68, 0.4);
+}
+/* Bottone Surprise */
+#btn-show-surp.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+}
+
+/* Campo Blu */
+.stadium-surp {
+    background: radial-gradient(circle at center, #001f3f 0%, #000a1a 100%) !important;
+}
+.pitch-surp {
+    background: repeating-linear-gradient(0deg, #001f3f 0, #001f3f 10%, #002a54 10%, #002a54 20%) !important;
+}
+.lights-surp {
+    background: conic-gradient(from 180deg at 50% 0%, transparent, rgba(0, 123, 255, 0.2), transparent) !important;
+}
+.stadium-container::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.6); /* Crea l'effetto "catino" dello stadio */
+    pointer-events: none;
+}
+
+.pitch-round-btn:active {
+    transform: scale(0.9) rotate(15deg);
+}
+.download-btn-card {
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    
+    /* Riducendo il primo valore (sopra/sotto) si abbassa l'altezza */
+    padding: 0px 5px !important; 
+    
+    /* Forza l'altezza della riga per evitare che il box si allarghi */
+    line-height: 1 !important; 
+    height: auto !important;
+    min-height: 0 !important;
+
+    background: rgba(0, 0, 0, 0.7) !important;
+    border: 1px solid rgba(163, 255, 0, 0.6) !important;
+    border-radius: 4px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999 !important;
+    cursor: pointer;
+
+    /* Font micro per stare nel box basso */
+    font-family: 'Inter', sans-serif !important;
+    font-size: 8px !important; 
+    font-weight: 900 !important;
+    color: var(--sisal-green) !important;
+    text-transform: uppercase;
+}
+
+.download-btn-card:hover {
+    background: var(--sisal-green) !important;
+    color: black !important;
+    border-color: var(--sisal-green) !important;
+}
+
+
+
+/* Nasconde il pulsante durante lo scatto della foto per non averlo nell'immagine finale */
+.hide-for-photo {
+    display: none !important;
+}
+.stadium-container {
+    position: relative !important; /* Obbligatorio per il tasto 📸 */
+}
+
+.download-btn-card {
+    position: absolute !important;
+    top: 15px !important;
+    right: 15px !important;
+    width: 35px !important;
+    height: 35px !important;
+    z-index: 9999 !important; /* Lo porta sopra le luci dello stadio */
+    background: rgba(0,0,0,0.6) !important;
+    border: 1px solid white !important;
+}
+#loader-global {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(11, 13, 15, 0.9);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 9999;
+}
+
+.spinner-container { text-align: center; }
+
+.main-spinner {
+    width: 80px;
+    height: 80px;
+    border: 4px solid rgba(163, 255, 0, 0.1);
+    border-left-color: var(--sisal-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 20px rgba(163, 255, 0, 0.2);
+    margin: 0 auto 20px;
+}
+
+.spinner-text {
+    font-family: 'Oswald';
+    color: var(--sisal-green);
+    letter-spacing: 2px;
+    font-size: 14px;
+    animation: pulseText 1.5s infinite alternate;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulseText {
+    from { opacity: 0.4; }
+    to { opacity: 1; }
+}
+
+#loader-global.hidden { display: none !important; }
+/* Questo serve a farle stare vicine e della giusta grandezza */
+#top-three, #flop-three {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px; /* Spazio tra le card */
+    padding: 10px;
+}
+
+/* 1. COMPATTA IL CONTENITORE ESTERNO */
+.player-card {
+    max-width: 300px !important; 
+    padding: 8px 10px !important; /* Ridotto al minimo */
+    margin: 5px auto !important;
+}
+
+/* 2. RIDUCI IL TITOLO "GOAL PREDICTOR" */
+.player-card .header-text {
+    font-size: 14px !important; /* Molto più piccolo */
+    margin-bottom: 2px !important;
+    line-height: 1 !important;
+}
+
+/* 3. LOGO MINIATURIZZATO */
+.player-card .logo-circle {
+    width: 60px !important;  /* Quasi la metà di prima */
+    height: 60px !important;
+    margin: 5px auto !important;
+    border-width: 3px !important; /* Bordo più sottile */
+}
+
+/* 4. NOME E TITOLARITÀ ATTACCATI */
+.player-card h3 {
+    font-size: 18px !important;
+    margin: 2px 0 !important;
+    letter-spacing: 0px !important;
+}
+
+.player-card .titolarita {
+    font-size: 9px !important;
+    padding: 2px 8px !important;
+    margin-bottom: 5px !important;
+}
+
+/* 5. TABELLA STATISTICHE SUPER SLIM */
+.player-card .stats-grid {
+    padding: 5px !important;
+    margin-top: 5px !important;
+    border-radius: 10px !important;
+}
+
+.stats-item b {
+    font-size: 13px !important; /* Numeri più piccoli */
+}
+
+.stats-item span {
+    font-size: 8px !important; /* Etichette minuscole */
+}
+
+/* 6. BOX BONUS FINALE */
+.player-card .bonus-box {
+    margin-top: 5px !important;
+    padding: 5px !important;
+    font-size: 14px !important;
+}
+/* --- SEZIONE TEAM CENTRATA --- */
+.team-box {
+    display: flex;
+    flex-direction: column; /* Forza logo sopra e nome sotto */
+    align-items: center;    /* Centra orizzontalmente */
+    justify-content: center;
+    margin: 10px 0;         /* Spazio sopra e sotto il blocco squadra */
+    width: 100%;
+}
+
+.team-logo-mini { 
+    width: 35px; 
+    height: 35px; 
+    object-fit: contain;
+    margin-bottom: 4px;     /* Distanza tra logo e scritta */
+}
+
+.team-name-mini { 
+    font-family: 'Oswald'; 
+    font-size: 16px; 
+    text-transform: uppercase; 
+    font-weight: bold;
+    letter-spacing: 1px;
+    line-height: 1;
+}
+/* Container per la riga verticale stile App */
+.player-row-vertical {
+    background: white;
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    color: #333;
+}
+
+.player-row-top {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Griglia dati sotto il calciatore */
+.player-row-data-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 colonne per far stare tutto bene */
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 12px;
+    gap: 10px;
+    text-align: center;
+}
+
+.data-item { display: flex; flex-direction: column; }
+.data-label { font-size: 9px; color: #888; font-weight: 800; text-transform: uppercase; }
+.data-value { font-size: 14px; font-weight: 900; color: #222; }
+
+/* Badge Ruoli */
+.ruolo-badge {
+    position: absolute; top: -5px; left: -5px; width: 22px; height: 22px;
+    border-radius: 50%; color: white; font-size: 11px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center; border: 2px solid white;
+}
+.bg-a { background-color: #e31e24; }
+.bg-c { background-color: #007bff; }
+.bg-d { background-color: #28a745; }
+.bg-p { background-color: #ffc107; }
+
+.bg-p { background-color: #ffcc00 !important; color: black !important; } /* Portiere Giallo */
+.bg-d { background-color: #008000 !important; } /* Difensore Verde */
+.bg-c { background-color: #0000ff !important; } /* Centrocampista Blu */
+.bg-a { background-color: #ff0000 !important; } /* Attaccante Rosso */
+
+/* Badge 3D migliorati e gestione visibilità */
+/* Badge 3D migliorati */
+.badge-3d {
+    display: inline-block;
+    padding: 8px 16px;       /* Aumentato da 4px 12px */
+    border-radius: 10px;     /* Leggermente più arrotondati */
+    font-family: 'Oswald', sans-serif;
+    font-weight: bold;
+    font-size: 18px;         /* Aumentato da 14px */
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    margin: 5px;
+    cursor: pointer;
+    background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(0,0,0,0.2) 100%);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4); /* Ombra più profonda */
+}
+
+/* Quando ci sono badge, il testo nero bonus scompare */
+.has-badges .badge-black { display: none !important; }
+
+/* Tasti + e - per Admin */
+.stat-ctrl {
+    background: #333;
+    color: var(--sisal-green);
+    border: 1px solid #444;
+    border-radius: 4px;
+    width: 25px;
+    height: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 0 2px;
+}
+.stat-ctrl:active { background: var(--sisal-green); color: black; }
+.bg-goal { background-color: #e31e24 !important; }  /* Rosso Goal */
+.bg-bonus { background-color: #28a745 !important; } /* Verde Bonus */
+.bg-malus { background-color: #333333 !important; } /* Nero/Grigio Malus */
+.bg-gold { background-color: #ffc107 !important; color: black !important; } /* Oro Top */
+
+.badge-admin {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.3);
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    transition: transform 0.2s;
+}
+
+.badge-admin:hover {
+    transform: scale(1.1);
+}
+
+/* Colori specifici */
+.badge-goal { background: linear-gradient(135deg, #28a745, #1e7e34); color: white; border: 1px solid #145a23; }
+.badge-esp { background: linear-gradient(135deg, #dc3545, #a71d2a); color: white; border: 1px solid #721c24; }
+.badge-auto { background: linear-gradient(135deg, #6c757d, #343a40); color: white; border: 1px solid #1d2124; }
+/* Badge Base: Grandi e d'impatto */
+.badge-spectacular {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px; /* Più grandi */
+    font-weight: 900;
+    text-transform: uppercase;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 2px 2px rgba(255,255,255,0.4);
+    text-shadow: 1px 2px 2px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.badge-spectacular:hover {
+    transform: translateY(-2px) scale(1.1);
+}
+
+/* Colori Gradienti */
+.bg-goal { background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%); }      /* Verde */
+.bg-special { background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%); }   /* Giallo/Oro */
+.bg-malus { background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%); }     /* Rosso */
+.bg-gold { background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%); }      /* Oro Premium */
+.bg-bonus { background: linear-gradient(180deg, #3498db 0%, #2980b9 100%); }     /* Blu */
+
+/* Container per i badge sopra la card */
+.bonus-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    min-height: 20px;
+}
+
+/* Stile Nastro Spettacolare */
+.badge-ribbon {
+    position: relative;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 900;
+    color: white;
+    text-transform: uppercase;
+    transform: skewX(-15deg); /* Inclinazione tipo nastro */
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+    display: inline-block;
+    cursor: pointer;
+    transition: transform 0.2s;
+    border: none;
+}
+
+.badge-ribbon:hover { transform: skewX(-15deg) scale(1.1); }
+
+/* Colori specifici */
+.bg-goal { background: #2ecc71; border-left: 5px solid #27ae60; }    /* Verde */
+.bg-malus { background: #e74c3c; border-left: 5px solid #c0392b; }   /* Rosso */
+.bg-special { background: #3498db; border-left: 5px solid #2980b9; } /* Blu (tipo allegato) */
+.bg-gold { background: #f1c40f; border-left: 5px solid #f39c12; }    /* Oro */
+
+/* Nascondi la percentuale standard se ci sono badge (opzionale) */
+.card.has-badges .badge-black {
+    display: none;
+}
+/* --- Base del Badge Spettacolare --- */
+.spectacular-ribbon {
+    position: relative;
+    padding: 12px 30px;
+    font-size: 20px; 
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    transform: skewX(-15deg); /* Inclinazione nastro */
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+    cursor: pointer;
+    min-width: 200px;
+    text-align: center;
+    border: none;
+    display: inline-block;
+    transition: all 0.3s ease; /* Transizione fluida */
+    margin: 10px;
+    z-index: 10;
+}
+
+/* Effetto al passaggio del mouse */
+.spectacular-ribbon:hover {
+    transform: skewX(-15deg) scale(1.05);
+    box-shadow: 7px 7px 20px rgba(0,0,0,0.5);
+}
+
+/* Raddrizza il testo all'interno */
+.spectacular-ribbon span {
+    display: block;
+    transform: skewX(15deg);
+}
+
+/* --- Varianti di Colore con Gradienti e Bordi --- */
+.ribbon-green { 
+    background: linear-gradient(90deg, #2ecc71, #27ae60); 
+    border-right: 8px solid #1e8449; 
+}
+.ribbon-red { 
+    background: linear-gradient(90deg, #e74c3c, #c0392b); 
+    border-right: 8px solid #922b21; 
+}
+.ribbon-blue { 
+    background: linear-gradient(90deg, #3498db, #2980b9); 
+    border-right: 8px solid #1c5980; 
+}
+.ribbon-gold { 
+    background: linear-gradient(90deg, #f1c40f, #f39c12); 
+    border-right: 8px solid #9d7e0a; 
+    color: #000; /* Testo nero per leggibilità sul giallo */
+}
+
+/* --- Logica di Scomparsa (Layout Card) --- */
+.card.has-badges .badge-black, 
+.card.has-badges .tit-container {
+    display: none !important;
+}
+
+/* Applica questo al contenitore della card in area ADMIN */
+.admin-card-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important; /* Forza il centraggio orizzontale */
+    justify-content: center !important;
+    width: 100% !important;
+    margin: 20px 0 !important;
+    overflow: visible !important; /* Permette ai badge di vedersi */
+}
+
+#admin-card-preview {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+/* Forza il contenitore a non avere scroll orizzontale e centra tutto */
+#admin-card-preview {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important; /* Metodo old-school ma efficace per blocchi con margin auto */
+}
+
+/* Protezione specifica per la card nell'area Admin */
+#admin-card-preview .card {
+    display: inline-block !important; /* Fondamentale per far funzionare text-align: center del padre */
+    float: none !important;
+    margin: 20px auto !important;
+    position: relative !important;
+    left: 0 !important;
+    right: 0 !important;
+}
+
+/* Evita che i nastri (ribbon) creino larghezza invisibile che spinge la card */
+.spectacular-ribbon {
+    max-width: 250px;
+    box-sizing: border-box;
+}
+/* RESET DEL CONTENITORE */
+#admin-card-preview {
+    display: block !important; /* Torniamo a block per evitare conflitti di riga */
+    width: 100% !important;
+    max-width: 100vw !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    text-align: center !important; /* Centra la card come se fosse testo */
+    overflow: visible !important; 
+}
+
+/* LA CARD */
+#admin-card-preview .card {
+    display: inline-block !important; /* Importante: permette a text-align del padre di funzionare */
+    float: none !important;
+    width: 320px !important; /* Forza larghezza fissa */
+    max-width: 90vw !important; /* Se lo schermo è più piccolo di 320px, si stringe */
+    margin: 20px 0 !important;
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    box-sizing: border-box !important;
+    transform: none !important; /* Togliamo lo scale per ora per vedere se si centra */
+}
+
+/* Il contenitore (quello col bordo rosso) */
+#admin-card-preview {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important; /* Forza il contenuto inline-block al centro */
+    padding: 0 !important;
+    margin: 0 auto !important;
+    overflow: hidden !important;
+}
+
+/* La card dentro il contenitore */
+#admin-card-preview .card {
+    display: inline-block !important; /* Fondamentale per il centraggio */
+    float: none !important;
+    position: relative !important;
+    left: 0 !important;   /* Reset posizionamento */
+    right: 0 !important;  /* Reset posizionamento */
+    margin: 15px 0 !important; /* Rimuove margin-left/right automatici */
+    width: 300px !important;   /* Larghezza fissa per l'anteprima */
+    max-width: 90% !important; /* Non esce mai dal bordo rosso */
+    box-sizing: border-box !important;
+    transform: none !important; /* Evitiamo che rotazioni o scale la spostino */
+}
+
+
+
+    </style>
+</head>
+<body>
+    <div id="loader-global" class="hidden">
+    <div class="spinner-container">
+        <div class="main-spinner"></div>
+        <div class="spinner-text">CARICAMENTO DATI FICUP...</div>
+    </div>
+</div>
+
+
+    <div id="page-home">
+    <h1 class="hero-title">FANTA<br>STATISTICHE</h1>
+    
+    <div style="margin-bottom: 25px; width: 80%; max-width: 300px;">
+        <input type="text" id="user-login-name" class="spectacular-input" 
+               style="text-align: center; border-left: none; border-bottom: 3px solid var(--sisal-green); background: rgba(255,255,255,0.05);" 
+               placeholder="Inserisci il tuo nome...">
+    </div>
+
+    <button class="btn-enter" onclick="startAppWithLog()">ENTRA NELL'APP</button>
+</div>
+
+
+    <div id="main-app">
+    <div id="content-stats" class="content active">
+        <h2 style="font-family:Oswald; color:var(--sisal-green); padding-left:20px;">DATABASE GIOCATORI</h2>
+        <div class="team-bar-container">
+            <div class="team-bar" id="team-logos"></div>
+        </div>
+
+        <div class="role-bar">
+            <button class="role-btn active" onclick="filterRole('TUTTI', this)">TUTTI</button>
+            <button class="role-btn" onclick="filterRole('P', this)">P</button>
+            <button class="role-btn" onclick="filterRole('D', this)">D</button>
+            <button class="role-btn" onclick="filterRole('C', this)">C</button>
+            <button class="role-btn" onclick="filterRole('A', this)">A</button>
+        </div>
+
+        <div style="overflow-x:auto">
+            <div id="table-body" class="player-list-vertical-container">
+    </div>
+
+        </div>
+    </div>
+
+    <div id="content-consigli" class="content hidden">
+    <h2 style="font-family:Oswald; color:var(--sisal-green); margin-bottom:10px;">VERIFICA CALCIATORE</h2>
+    <div class="search-container">
+        <input type="text" class="spectacular-input" placeholder="Cerca un singolo calciatore..." oninput="searchAdvice(this.value)">
+        <div id="advice-result"></div>
+    </div>
+
+    <div style="margin-top:40px; border: 1px solid rgba(0,212,255,0.3); border-radius: 20px; padding: 15px; background: rgba(0,212,255,0.03);">
+        <h2 style="font-family:Oswald; color:var(--neon-blue); text-align:center; margin-top:0;">
+            <span style="font-size: 10px; color: white; display: block; opacity: 0.6; letter-spacing: 2px;">SISTEMA MULTI-PLAYER</span>
+            COACH CONTROL ROOM
+        </h2>
+        
+        <div class="search-container">
+            <input type="text" id="coach-search" class="spectacular-input" 
+                   style="border-left: 5px solid var(--neon-blue);" 
+                   placeholder="Aggiungi calciatori alla tua lista..." oninput="searchCoachPlayer(this.value)">
+            <div id="coach-suggestions" style="position: absolute; width: 100%; background: #1a1f24; z-index: 100; border-radius: 0 0 15px 15px; border: 1px solid #333; display:none;"></div>
+        </div>
+
+        <div id="my-squad-container" style="margin-top:15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="font-family:Oswald; margin:0; font-size:12px; color:#666; text-transform:uppercase;">I Tuoi Ballottaggi</h3>
+                <button onclick="clearCoachSquad()" style="background:none; border:none; color:#ff4444; font-size:10px; font-weight:bold; cursor:pointer;">RESET</button>
+            </div>
+            <div id="coach-list-display">
+                <p id="coach-empty-msg" style="text-align:center; color:#444; font-size:11px; padding:10px 0;">Lista vuota. Aggiungi i tuoi dubbi di formazione.</p>
+            </div>
+        </div>
+    </div>
+
+    <h2 style="font-family:Oswald; color:var(--sisal-green); margin-top:50px; text-align:center;">I 3 TOP PER SQUADRA</h2>
+    <div id="team-advice-list" style="margin-top:20px;">
+        </div>
+</div>
+
+<div id="content-topflop" class="content hidden">
+    <h2 style="font-family:Oswald; color:var(--sisal-green); text-align:center;">I 3 TOP</h2>
+    <div id="top-three"></div> <h2 style="font-family:Oswald; color:#ff0044; text-align:center; margin-top:40px;">I 3 FLOP</h2>
+    <div id="flop-three"></div> </div>
+ 
+ <div id="content-admin" class="content hidden">
+    <div style="text-align:center; padding: 20px;">
+        <h2 style="font-family:Oswald; color:var(--sisal-green);">PANNELLO ADMIN</h2>
+        <p style="font-size:12px; color:#666;">Gestione Database e Immagini</p>
+    </div>
+
+    <div class="admin-login-box" style="background: #161a1e; padding: 20px; border-radius: 15px; border: 1px solid #333;">
+        <input type="password" id="admin-pass" class="spectacular-input" placeholder="Password Admin..." style="margin-bottom:10px;">
+        
+        <div id="admin-tools" style="display:none; margin-top:20px;">
+            <p style="color:var(--sisal-green); font-weight:bold;">Accesso Eseguito</p>
+            <hr border="0" style="border-top:1px solid #333; margin:15px 0;">
+            
+            <label style="font-size:10px; color:#888; display:block; margin-bottom:5px;">NOME CALCIATORE (Esatto)</label>
+            <input type="text" id="pSearch" class="spectacular-input" placeholder="Esempio: Dybala">
+            
+            <label style="font-size:10px; color:#888; display:block; margin:15px 0 5px 0;">URL FOTO (PNG Trasparente)</label>
+            <input type="text" id="pImg" class="spectacular-input" placeholder="https://link-immagine.png">
+            
+            <button onclick="saveImage()" class="btn-enter" style="width:100%; margin-top:20px; font-size:16px; padding:15px;">SALVA FOTO</button>
+            <hr border="0" style="border-top:1px dashed #333; margin:25px 0;">
+
+<div style="text-align:center;">
+    <h3 style="font-family:Oswald; color:var(--neon-blue); font-size:18px;">GENERA CARD SINGOLA</h3>
+    <p style="font-size:9px; color:#666; margin-bottom:15px;">Cerca un calciatore per generare la sua card scaricabile</p>
+    
+    <div class="search-container">
+        <input type="text" id="admin-pSearch-card" class="spectacular-input" 
+               placeholder="Cerca calciatore (es. Lukaku)..." 
+               oninput="searchAdminPlayer(this.value)" 
+               style="border-left: 5px solid var(--neon-blue);">
+        <div id="admin-suggestions" style="position: absolute; width: 100%; background: #1a1f24; z-index: 100; border-radius: 0 0 15px 15px; border: 1px solid #333; display:none;"></div>
+    </div>
+
+<div class="admin-controls" style="background: #111; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #333;">
+    <h4 style="color: var(--sisal-green); font-family: Oswald; margin:0 0 10px 0; font-size:14px;">MODIFICA LIVE E BADGE</h4>
+    
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 15px; background: #1a1f24; padding: 10px; border-radius: 10px;">
+        <div style="font-size:11px; color:white;">GOL: <button class="stat-ctrl" onclick="liveEdit('GOL', 1)">+</button><button class="stat-ctrl" onclick="liveEdit('GOL', -1)">-</button></div>
+        <div style="font-size:11px; color:white;">ASSIST: <button class="stat-ctrl" onclick="liveEdit('ASS', 1)">+</button><button class="stat-ctrl" onclick="liveEdit('ASS', -1)">-</button></div>
+        <div style="font-size:11px; color:white;">PV: <button class="stat-ctrl" onclick="liveEdit('PV', 1)">+</button><button class="stat-ctrl" onclick="liveEdit('PV', -1)">-</button></div>
+        <div style="font-size:11px; color:white;">GS: <button class="stat-ctrl" onclick="liveEdit('GS', 1)">+</button><button class="stat-ctrl" onclick="liveEdit('GS', -1)">-</button></div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
+        <span class="badge-3d bg-goal" onclick="addBadgeToCard('GOAL +3')">⚽ +3</span>
+        <span class="badge-3d bg-goal" onclick="addBadgeToCard('DOPPIETTA +6')">🔥 +6</span>
+        <span class="badge-3d bg-goal" onclick="addBadgeToCard('TRIPLETA +9')">🚀 +9</span>
+        
+        <span class="badge-3d bg-bonus" onclick="addBadgeToCard('BONUS +1')">✔️ +1</span>
+        <span class="badge-3d bg-bonus" onclick="addBadgeToCard('BONUS +2')">⭐ +2</span>
+        <span class="badge-3d bg-gold" onclick="addBadgeToCard('TOP MVP')">🏆 TOP</span>
+        
+        <span class="badge-3d bg-malus" onclick="addBadgeToCard('ESPULSO -1')">🟥 -1</span>
+        <span class="badge-3d bg-malus" onclick="addBadgeToCard('AUTOGOL -2')">❌ -2</span>
+    </div>
+
+    <button onclick="resetAdminCard()" style="margin-top:10px; background:none; border:1px solid #444; color:#666; font-size:10px; padding:5px; border-radius:5px; width:100%;">RESET CARD</button>
+</div>
+
+
+
+
+    <div id="admin-card-preview" style="margin-top:20px;">
+        </div>
+</div>
+
+        </div>
+        
+        <button id="btn-login-admin" onclick="checkAdmin()" class="btn-enter" style="width:100%; margin-top:10px; font-size:16px;">SBLOCCA</button>
+    </div>
+</div>
+
+ 
+    <nav class="navbar">
+    <div class="nav-item active" onclick="switchTab('stats', this)">
+        <span class="nav-text">Analisi</span>
+    </div>
+    
+    <div class="nav-item" onclick="switchTab('consigli', this)">
+        <span class="nav-text">Coach</span>
+    </div>
+    
+    <div class="nav-item round-btn-container" onclick="switchTab('pitch', this)">
+        <div class="pitch-round-btn">XI</div>
+    </div>
+    
+    <div class="nav-item" onclick="switchTab('topflop', this)">
+        <span class="nav-text">Top/Flop</span>
+    </div>
+    
+    <div class="nav-item" onclick="switchTab('admin', this)">
+        <span class="nav-text">Admin</span>
+    </div>
+</nav>
+
+
+
+<div id="content-pitch" class="content hidden">
+    <h2 style="font-family:'Oswald'; color:var(--sisal-green); text-align:center; margin-bottom:5px;"></h2>
+
+    <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 15px;">
+        <button id="btn-show-top" class="switch-btn active" onclick="togglePitch('top')">TOP</button>
+        <button id="btn-show-surp" class="switch-btn" onclick="togglePitch('surprise')">SURPRISE</button>
+        <button id="btn-show-flop" class="switch-btn" onclick="togglePitch('flop')">FLOP</button>
+    </div>
+
+    <div id="wrapper-pitch-top">
+        <div class="stadium-container">
+            <div class="lights"></div>
+            <div class="football-pitch">
+                <div class="pitch-lines">
+    <div class="penalty-area"></div>
+    <div class="center-circle"></div>
+    <div class="penalty-area-bottom"></div> </div>
+
+                <div class="pitch-row" id="pitch-gk"></div>
+                <div class="pitch-row" id="pitch-def"></div>
+                <div class="pitch-row" id="pitch-mid"></div>
+                <div class="pitch-row" id="pitch-att"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="wrapper-pitch-surp" style="display:none;">
+        <div class="stadium-container stadium-surp">
+            <div class="lights lights-surp"></div>
+            <div class="football-pitch pitch-surp">
+                <div <div class="pitch-lines">
+    <div class="penalty-area"></div>
+    <div class="center-circle"></div>
+    <div class="penalty-area-bottom"></div> </div>
+
+                <div class="pitch-row" id="surp-gk"></div>
+                <div class="pitch-row" id="surp-def"></div>
+                <div class="pitch-row" id="surp-mid"></div>
+                <div class="pitch-row" id="surp-att"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="wrapper-pitch-flop" style="display:none;">
+        <div class="stadium-container stadium-flop">
+            <div class="lights lights-flop"></div>
+            <div class="football-pitch pitch-flop">
+                <div <div class="pitch-lines">
+    <div class="penalty-area"></div>
+    <div class="center-circle"></div>
+    <div class="penalty-area-bottom"></div> </div>
+
+                <div class="pitch-row" id="flop-gk"></div>
+                <div class="pitch-row" id="flop-def"></div>
+                <div class="pitch-row" id="flop-mid"></div>
+                <div class="pitch-row" id="flop-att"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    
+
+
+
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyHCabOTw1cYL65r2vE-5QD8WmokRlPqN_tLTj-LxYHoB0ohBczUy5N6lSooMoCV76lCQ/exec";
+    let database = [];
+    let currentTeam = "TUTTE";
+    let currentRole = "TUTTI";
+
+    const LOGOS = {
+        "Atalanta":"https://i.ibb.co/HLfTYZx7/Logo-Atalanta-Bergamo-svg.png",
+        "Bologna":"https://i.ibb.co/jkM5SPbz/Bologna-F-C-1909-logo-svg.png",
+        "Cagliari":"https://i.ibb.co/MDpds1V1/cagliari-calcio-logo-png-seeklogo-315166-3.png",
+        "Como":"https://i.ibb.co/qYhwMQzH/Logo-Como-1907-2019.png",
+        "Cremonese":"https://i.ibb.co/mCKdTQkH/Unione-Sportiva-Cremonese-logo-svg-1.png",
+        "Fiorentina":"https://i.ibb.co/4gZ5jDc5/ACF-Fiorentina-logo-Italy-2022-svg.png",
+        "Genoa":"https://i.ibb.co/Z6RcxTWw/Genoa-Cricket-and-Football-Club-logo-svg.png",
+        "Inter":"https://i.ibb.co/F4C4vHjc/FC-Internazionale-Milano-2021-svg-1.png",
+        "Juventus":"https://i.ibb.co/xtkRyBJp/Juventus-FC-2017-logo.png",
+        "Lazio":"https://i.ibb.co/840BWT8m/Stemma-della-Societ-Sportiva-Lazio-svg.png",
+        "Lecce":"https://i.ibb.co/SDQ0zy8s/US-Lecce-Stemma-svg.png",
+        "Milan":"https://i.ibb.co/B2V1c6K3/Logo-of-AC-Milan-svg.png",
+        "Napoli":"https://i.ibb.co/DgmL7YGb/SSC-Neapel-svg.png",
+        "Parma":"https://i.ibb.co/bgMLjHdf/Logo-Parma-Calcio-1913-adozione-2016-svg.png",
+        "Pisa":"https://i.ibb.co/35bNsCSV/Logo-Pisa-SC-2017-svg.png",
+        "Roma":"https://i.ibb.co/rRkxM7Bf/AS-Roma-Logo-2017-svg-1.png",
+        "Sassuolo":"https://i.ibb.co/Xrj8PYjx/Ussassuolostemma-svg.png",
+        "Torino":"https://i.ibb.co/v62Bw8qY/Torino-FC-logo-svg.png",
+        "Udinese":"https://i.ibb.co/5xhRTYmp/Logo-Udinese-Calcio-svg.png",
+        "Verona":"https://i.ibb.co/k6yWJsZf/Hellas-Verona-FC-logo-2020-svg.png"
+    };
+
+    function startApp() {
+        $('#page-home').fadeOut(500, function() {
+            $('#main-app').show();
+            loadData();
+        });
+    }
+
+    // --- NUOVA GESTIONE TAB ---
+    function switchTab(tab, el) {
+    $('.content').addClass('hidden').removeClass('active');
+    $('.nav-item').removeClass('active');
+    $(`#content-${tab}`).removeClass('hidden').addClass('active');
+    $(el).addClass('active');
+    
+    if(tab === 'topflop') loadTopFlopSection();
+    if(tab === 'consigli') loadTeamAdvice();
+    
+    // Gestione dei due campi
+    if(tab === 'pitch') renderTop11();      // Campo Verde (Top)
+    if(tab === 'pitchflop') renderFlop11(); // Campo Rosso (Flop)
+}
+function togglePitch(type) {
+    // Nascondi tutti i wrapper
+    $('#wrapper-pitch-top, #wrapper-pitch-flop, #wrapper-pitch-surp').hide();
+    $('.switch-btn').removeClass('active');
+    
+    if (type === 'top') {
+        $('#wrapper-pitch-top').show();
+        $('#btn-show-top').addClass('active');
+        renderTop11();
+    } else if (type === 'surprise') {
+        $('#wrapper-pitch-surp').show();
+        $('#btn-show-surp').addClass('active');
+        renderSurp11();
+    } else {
+        $('#wrapper-pitch-flop').show();
+        $('#btn-show-flop').addClass('active');
+        renderFlop11();
+    }
+}
+
+
+    function renderTop11() {
+    // Troviamo il contenitore specifico del Top (Verde)
+    const container = $('#wrapper-pitch-top .stadium-container');
+    container.attr('id', 'stadium-top'); // Assegniamo un ID se manca
+    container.css('position', 'relative');
+    container.find('.download-btn-card').remove();
+    container.prepend(`<div class="download-btn-card" onclick="event.stopPropagation(); downloadCardImage('stadium-top', 'Top11_Verde')">✨</div>`);
+
+
+    const playersDisponibili = [...database].filter(p => {
+        const titolaritaVal = parseInt(p.titolarita) || 0;
+        return !p.isEscluso && titolaritaVal >= 40;
+    });
+    playersDisponibili.sort((a, b) => b.score - a.score);
+    const formazione = { gk: [], def: [], mid: [], att: [] };
+    const pickUniqueByRole = (role, count) => {
+        const squadreUsate = new Set();
+        const filtered = playersDisponibili.filter(p => p.ruolo.toUpperCase() === role.toUpperCase());
+        let picked = 0;
+        for (let p of filtered) {
+            if (!squadreUsate.has(p.squadra) && picked < count) {
+                const key = role === 'P' ? 'gk' : (role === 'D' ? 'def' : (role === 'C' ? 'mid' : 'att'));
+                formazione[key].push(p);
+                squadreUsate.add(p.squadra);
+                picked++;
+            }
+        }
+    };
+    pickUniqueByRole('P', 1); pickUniqueByRole('D', 3); pickUniqueByRole('C', 4); pickUniqueByRole('A', 3);
+    const createPitchHTML = (p) => {
+        const fotoUrl = String(p.foto || "").trim();
+        const logoSquadra = LOGOS[p.squadra] || "";
+        let n = p.nome.split(' ');
+        let nomeVisualizzato = (n.length > 1 && n[0].length <= 3) ? n[0] + " " + n[1] : n[0];
+        let imgHtml = fotoUrl.toLowerCase().startsWith('http') ? `<img src="${fotoUrl}" class="pitch-player-img">` : `<img src="${logoSquadra}" class="pitch-player-img logo-fallback">`;
+        return `<div class="pitch-player" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')">${imgHtml}<div class="pitch-player-name">${nomeVisualizzato.toUpperCase()}</div><div style="font-size:8px; color:#0a5d0a; font-weight:bold; background:white; border-radius:4px; margin-top:2px; padding: 1px 3px; border: 1px solid var(--sisal-green);">${p.squadra}</div></div>`;
+    };
+    $('#pitch-gk').html(formazione.gk.map(createPitchHTML).join(''));
+    $('#pitch-def').html(formazione.def.map(createPitchHTML).join(''));
+    $('#pitch-mid').html(formazione.mid.map(createPitchHTML).join(''));
+    $('#pitch-att').html(formazione.att.map(createPitchHTML).join(''));
+}
+
+function renderFlop11() {
+    const container = $('#wrapper-pitch-flop .stadium-container');
+    container.attr('id', 'stadium-flop-id');
+    container.css('position', 'relative');
+    container.find('.download-btn-card').remove();
+    container.prepend(`<div class="download-btn-card" onclick="event.stopPropagation(); downloadCardImage('stadium-flop-id', 'Flop11_Rosso')">✨</div>`);
+
+
+    const playersDisponibili = [...database].filter(p => {
+        const titolaritaVal = parseInt(p.titolarita) || 0;
+        return !p.isEscluso && titolaritaVal >= 40;
+    });
+    playersDisponibili.sort((a, b) => a.score - b.score);
+    const formazioneFlop = { gk: [], def: [], mid: [], att: [] };
+    const pickUniqueByRole = (role, count) => {
+        const squadreUsate = new Set();
+        const filtered = playersDisponibili.filter(p => p.ruolo.toUpperCase() === role.toUpperCase());
+        let picked = 0;
+        for (let p of filtered) {
+            if (!squadreUsate.has(p.squadra) && picked < count) {
+                const key = role === 'P' ? 'gk' : (role === 'D' ? 'def' : (role === 'C' ? 'mid' : 'att'));
+                formazioneFlop[key].push(p);
+                squadreUsate.add(p.squadra);
+                picked++;
+            }
+        }
+    };
+    pickUniqueByRole('P', 1); pickUniqueByRole('D', 3); pickUniqueByRole('C', 4); pickUniqueByRole('A', 3);
+    const createFlopPitchHTML = (p) => {
+        const logoSquadra = LOGOS[p.squadra] || "";
+        let n = p.nome.split(' ');
+        let nomeVisualizzato = (n.length > 1 && n[0].length <= 3) ? n[0] + " " + n[1] : n[0];
+        return `<div class="pitch-player" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')"><img src="${logoSquadra}" class="pitch-player-img logo-fallback" style="border-color:#ff0044"><div class="pitch-player-name" style="background:#ff0044">${nomeVisualizzato.toUpperCase()}</div><div style="font-size:8px; color:#ff0044; font-weight:bold; background:white; border-radius:4px; margin-top:2px; padding: 1px 3px; border: 1px solid #ff0044;">${p.squadra}</div></div>`;
+    };
+    $('#flop-gk').html(formazioneFlop.gk.map(createFlopPitchHTML).join(''));
+    $('#flop-def').html(formazioneFlop.def.map(createFlopPitchHTML).join(''));
+    $('#flop-mid').html(formazioneFlop.mid.map(createFlopPitchHTML).join(''));
+    $('#flop-att').html(formazioneFlop.att.map(createFlopPitchHTML).join(''));
+}
+
+function renderSurp11() {
+    const container = $('#wrapper-pitch-surp .stadium-container');
+    container.attr('id', 'stadium-surp-id');
+    container.css('position', 'relative');
+    container.find('.download-btn-card').remove();
+    container.prepend(`<div class="download-btn-card" onclick="event.stopPropagation(); downloadCardImage('stadium-surp-id', 'Surprise11_Blu')">✨</div>`);
+
+
+    const nomiTop11 = [];
+    $('#pitch-gk, #pitch-def, #pitch-mid, #pitch-att').find('.pitch-player-name').each(function() {
+        nomiTop11.push($(this).text().trim().toLowerCase());
+    });
+    const portieriDisponibili = [...database].filter(p => {
+        const tit = parseInt(p.titolarita) || 0;
+        const nomeSemplice = p.nome.split(' ')[0].toLowerCase();
+        return !p.isEscluso && tit >= 40 && p.ruolo.toUpperCase() === 'P' && !nomiTop11.includes(nomeSemplice);
+    });
+    const altriDisponibili = [...database].filter(p => {
+        const tit = parseInt(p.titolarita) || 0;
+        const nomeSemplice = p.nome.split(' ')[0].toLowerCase();
+        return !p.isEscluso && tit >= 40 && p.ruolo.toUpperCase() !== 'P' && (parseFloat(p.score) || 0) >= 10 && !nomiTop11.includes(nomeSemplice);
+    });
+    portieriDisponibili.sort((a, b) => b.score - a.score);
+    altriDisponibili.sort((a, b) => b.percentuale - a.percentuale);
+    const formazioneSurp = { gk: [], def: [], mid: [], att: [] };
+    if(portieriDisponibili.length > 0) formazioneSurp.gk.push(portieriDisponibili[0]);
+    const pickUniqueByRole = (role, count) => {
+        const squadreUsate = new Set();
+        const filtered = altriDisponibili.filter(p => p.ruolo.toUpperCase() === role.toUpperCase());
+        let picked = 0;
+        for (let p of filtered) {
+            if (!squadreUsate.has(p.squadra) && picked < count) {
+                const key = role === 'D' ? 'def' : (role === 'C' ? 'mid' : 'att');
+                formazioneSurp[key].push(p);
+                squadreUsate.add(p.squadra);
+                picked++;
+            }
+        }
+    };
+    pickUniqueByRole('D', 3); pickUniqueByRole('C', 4); pickUniqueByRole('A', 3);
+    const createSurpHTML = (p) => {
+        const logoSquadra = LOGOS[p.squadra] || "";
+        let n = p.nome.split(' ');
+        let nomeVisualizzato = (n.length > 1 && n[0].length <= 3) ? n[0] + " " + n[1] : n[0];
+        return `<div class="pitch-player" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')"><img src="${logoSquadra}" class="pitch-player-img logo-fallback" style="border-color:#007bff; background:white;"><div class="pitch-player-name" style="background:#007bff; color:white;">${nomeVisualizzato.toUpperCase()}</div><div style="font-size:8px; color:#007bff; font-weight:bold; background:white; border-radius:4px; margin-top:2px; padding: 1px 3px; border: 1px solid #007bff;">${p.squadra}</div></div>`;
+    };
+    $('#surp-gk').html(formazioneSurp.gk.map(createSurpHTML).join(''));
+    $('#surp-def').html(formazioneSurp.def.map(createSurpHTML).join(''));
+    $('#surp-mid').html(formazioneSurp.mid.map(createSurpHTML).join(''));
+    $('#surp-att').html(formazioneSurp.att.map(createSurpHTML).join(''));
+}
+
+
+
+
+   function loadData() {
+    // 1. Assicuriamoci che il loader sia visibile prima di far partire la chiamata
+    $('#loader-global').removeClass('hidden');
+
+    $.ajax({
+        url: SCRIPT_URL + "?action=getLista",
+        dataType: 'jsonp',
+        success: function(data) {
+            if(data && data.length > 0) {
+                database = data;
+                
+                // Svuota i loghi
+                $('#team-logos').empty(); 
+                
+                const teams = [...new Set(data.map(p => p.squadra))].sort();
+                teams.forEach(t => {
+                    if(LOGOS[t]) {
+                        const activeClass = (t === currentTeam) ? "active" : "";
+                        $('#team-logos').append(`<img src="${LOGOS[t]}" class="team-logo-btn ${activeClass}" onclick="filterTeam('${t}', this)" title="${t}">`);
+                    }
+                });
+
+                renderTable();
+                setupSearch();
+
+                // 2. NASCONDI IL LOADER dopo che tutto è pronto
+                // Usiamo un piccolo delay di 500ms per un effetto "smooth"
+                setTimeout(function() {
+                    $('#loader-global').addClass('hidden');
+                }, 500);
+            }
+        },
+        error: function() {
+            // Nascondi comunque il loader se c'è un errore, altrimenti l'app resta bloccata
+            $('#loader-global').addClass('hidden');
+            alert("Errore nel caricamento dei dati!");
+        }
+    });
+}
+
+
+    function filterTeam(t, el) { $('.team-logo-btn').removeClass('active'); $(el).addClass('active'); currentTeam = t; renderTable(); }
+    function filterRole(r, el) { $('.role-btn').removeClass('active'); $(el).addClass('active'); currentRole = r; renderTable(); }
+
+    function renderTable() {
+    const filtrati = database.filter(p => {
+        const tM = currentTeam === "TUTTE" || p.squadra === currentTeam;
+        const rM = currentRole === "TUTTI" || p.ruolo === currentRole;
+        return tM && rM;
+    });
+
+    let h = "";
+    filtrati.forEach(p => {
+        const fotoUrl = String(p.foto || "").trim();
+        const logoSquadra = LOGOS[p.squadra] || "";
+        const ruoloClass = "bg-" + (p.ruolo ? p.ruolo.toLowerCase() : 'c');
+        
+        const percVal = parseFloat(p.percentuale) || 0;
+        const isConsigliato = (percVal >= 60 && !p.isEscluso);
+        
+        let consiglioCol = "#ff9800"; // ARANCIO per "Non consigliato"
+        let consiglioTesto = "⚠️ NON CONSIGLIATO";
+        
+        if (p.isEscluso) {
+            consiglioCol = "#ff4444";
+            consiglioTesto = "⛔ GIOCATORE OUT";
+        } else if (isConsigliato) {
+            consiglioCol = "var(--sisal-green)";
+            consiglioTesto = "✅ CONSIGLIATO";
+        }
+
+        // --- FIX LOGO/FOTO (Misure fisse per html2canvas) ---
+        let avatarHtml = "";
+        if (fotoUrl.toLowerCase().startsWith('http')) {
+            // Foto giocatore: usiamo un div di sfondo per evitare lo stretch
+            avatarHtml = `<div style="width:55px; height:55px; border-radius:50%; border:2px solid ${consiglioCol}; 
+                          background-image: url('${fotoUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>`;
+        } else {
+            // Logo squadra: cerchio bianco con logo centrato matematicamente
+            avatarHtml = `
+                <div style="width:55px; height:55px; border-radius:50%; background:white; border:2px solid ${consiglioCol}; 
+                            display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                    <img src="${logoSquadra}" style="width:38px; height:38px; object-fit:contain; flex-shrink:0;">
+                </div>`;
+        }
+
+        h += `
+        <div class="player-row-vertical" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')" 
+             style="background: #161a1e; border: 1px solid #333; margin-bottom:12px; border-radius:18px; padding:15px; color:white;">
+            
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:12px;">
+                <div style="position:relative; width:55px; height:55px; flex-shrink:0;">
+                    <div class="ruolo-badge ${ruoloClass}" style="position:absolute; top:-5px; left:-5px; width:22px; height:22px; border-radius:50%; font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:900; border:2px solid #161a1e; z-index:2;">${p.ruolo}</div>
+                    ${avatarHtml}
+                </div>
+                
+                <div style="flex-grow:1;">
+                    <div style="font-family:Oswald; font-size:19px; text-transform:uppercase; line-height:1.1;">${p.nome}</div>
+                    <div style="display:flex; align-items:center; gap:5px; margin-top:3px;">
+                        <img src="${logoSquadra}" style="width:14px; height:14px; object-fit:contain;">
+                        <span style="font-size:11px; color:#aaa; font-weight:600; text-transform:uppercase;">${p.squadra}</span>
+                    </div>
+                </div>
+
+                <div style="text-align:center; background:rgba(255,255,255,0.05); padding:6px 12px; border-radius:12px; border:1px solid ${consiglioCol}; min-width:65px;">
+                    <div style="font-size:18px; font-weight:900; color:${consiglioCol};">${p.percentuale}%</div>
+                    <div style="font-size:7px; font-weight:bold; color:white; opacity:0.5;">BONUS</div>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
+                <div style="background:rgba(255,255,255,0.03); padding:8px 4px; border-radius:10px; text-align:center;">
+                    <div style="font-size:8px; color:#666; font-weight:bold;">TIT.</div>
+                    <div style="font-size:14px; font-weight:800;">${p.titolarita}</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); padding:8px 4px; border-radius:10px; text-align:center;">
+                    <div style="font-size:8px; color:#666; font-weight:bold;">FM</div>
+                    <div style="font-size:14px; font-weight:800; color:var(--sisal-green);">${p.fm.toFixed(1)}</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); padding:8px 4px; border-radius:10px; text-align:center;">
+                    <div style="font-size:8px; color:#666; font-weight:bold;">MV</div>
+                    <div style="font-size:14px; font-weight:800;">${p.mv.toFixed(1)}</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); padding:8px 4px; border-radius:10px; text-align:center;">
+                    <div style="font-size:8px; color:#666; font-weight:bold;">${p.ruolo==='P'?'GS':'GF'}</div>
+                    <div style="font-size:14px; font-weight:800;">${p.ruolo==='P'?p.gs:p.gf}</div>
+                </div>
+                
+                <div style="grid-column: span 4; background:${consiglioCol}; margin-top:4px; padding:8px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <span style="font-size:11px; font-weight:900; color:black; text-transform:uppercase; letter-spacing:1px;">
+                        ${consiglioTesto}
+                    </span>
+                </div>
+            </div>
+        </div>`;
+    });
+
+    $('#table-body').html(h);
+}
+
+
+    function searchAdvice(val) {
+        if(val.length < 2) return $('#advice-result').html('');
+        let p = database.find(x => x.nome.toLowerCase().includes(val.toLowerCase()));
+        if(p) $('#advice-result').html(buildCard(p, p.score < 10));
+    }
+
+    function loadTeamAdvice() {
+        let h = "";
+        const teams = [...new Set(database.map(p => p.squadra))].sort();
+        teams.forEach(t => {
+            let top3 = database.filter(p => p.squadra === t).sort((a,b) => b.score - a.score).slice(0,3);
+            h += `<div style="background:#1a1f24; padding:15px; border-radius:15px; margin-bottom:10px; border-left:4px solid var(--sisal-green)">
+                    <strong style="color:var(--sisal-green)">${t.toUpperCase()}</strong><br>
+                    <small>${top3.map(x => x.nome).join(' • ')}</small>
+                  </div>`;
+        });
+        $('#team-advice-list').html(h);
+    }
+
+    function loadTopFlopSection() {
+        let sorted = [...database].sort((a,b) => b.score - a.score);
+        $('#top-three').html(sorted.slice(0,3).map(p => buildCard(p, false)).join(''));
+        let flops = [...database].sort((a,b) => a.score - b.score);
+        $('#flop-three').html(flops.slice(0,3).map(p => buildCard(p, true)).join(''));
+    }
+
+
+
+// Nuova funzione per aprire la card al clic
+function openPlayerCard(nome) {
+    $('#modal-card').css('display','flex').hide().fadeIn();
+    $('#modal-content').html('<p style="color:white; font-family:Oswald;">CARICAMENTO CARD...</p>');
+    $.ajax({
+        url: SCRIPT_URL + "?nome=" + encodeURIComponent(nome),
+        dataType: 'jsonp',
+        success: function(res) { 
+            if(res.success) $('#modal-content').html(buildCard(res));
+            else $('#modal-content').html('<p style="color:white">Dati non trovati</p>');
+        }
+    });
+}
+
+    function selectPlayer(n) { $('#pSearch').val(n); $('#suggestions').hide(); doSearch(); }
+    
+function renderPlayerRow(p) {
+    if (!p) return "";
+    
+    const s = p.stats ? p.stats : p;
+    const isP = p.ruolo === "P";
+    const logoSquadra = LOGOS[p.squadra] || "";
+    const fotoStr = String(p.foto || "").trim();
+    
+    // Colore ruolo
+    const ruoloClass = "bg-" + (p.ruolo ? p.ruolo.toLowerCase() : 'c');
+
+    // Definiamo i blocchi statistiche in base al ruolo (tue info attuali)
+    const statsConfig = isP 
+        ? [ {l: 'PV', v: s.pv}, {l: 'MV', v: s.mv}, {l: 'GS', v: s.gs}, {l: 'RP', v: s.rp}, {l: 'AM', v: s.amm}, {l: 'ES', v: s.esp} ]
+        : [ {l: 'PV', v: s.pv}, {l: 'MV', v: s.mv}, {l: 'GL', v: s.gf}, {l: 'AS', v: s.ass}, {l: 'AM', v: s.amm}, {l: 'ES', v: s.esp} ];
+
+    return `
+        <div class="player-row-vertical">
+            <div class="player-row-top">
+                <div class="player-avatar-container" style="position:relative; width:50px; height:50px;">
+                    <div class="ruolo-badge ${ruoloClass}">${p.ruolo}</div>
+                    <img src="${fotoStr}" class="player-avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='${logoSquadra}'">
+                </div>
+                <div style="flex-grow:1;">
+                    <div style="font-weight:800; font-size:16px; text-transform:uppercase;">${p.nome}</div>
+                    <div style="font-size:12px; color:#666; display:flex; align-items:center; gap:5px;">
+                        <img src="${logoSquadra}" style="width:15px; height:15px; object-fit:contain;">
+                        ${p.squadra.toUpperCase()}
+                    </div>
+                </div>
+                <div style="background:#eef2f7; padding:5px 10px; border-radius:8px; text-align:center;">
+                    <div style="font-size:16px; font-weight:900; color:#4a5af8;">${p.prezzo || s.fvm || 0}</div>
+                    <div style="font-size:8px; font-weight:bold; color:#aaa;">QUOT.</div>
+                </div>
+            </div>
+
+            <div class="player-row-data-grid">
+                ${statsConfig.map(stat => `
+                    <div class="data-item">
+                        <span class="data-value">${stat.v || 0}</span>
+                        <span class="data-label">${stat.l}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+
+
+function buildCard(p, isFlop = false) {
+    if (!p) return "";
+    
+    // 1. ID UNICO E STATS
+    const cardId = "card-" + p.nome.replace(/\s+/g, '-').toLowerCase();
+    const s = p.stats ? p.stats : p;
+    
+    // 2. TITOLARITÀ
+    let titDisplay = "0%";
+    if (p.titolarita) titDisplay = p.titolarita;
+    else if (p.stats && p.stats.titolarita) titDisplay = p.stats.titolarita;
+    
+    const isP = p.ruolo === "P";
+    const logoSquadra = LOGOS[p.squadra] || "";
+    
+    // 3. FOTO E LOGO (Tua logica originale con fix fallback)
+    const fotoStr = String(p.foto || "").trim();
+    let imgHtml = ""; 
+    if (fotoStr.toLowerCase().startsWith('http')) {
+        imgHtml = `<img src="${fotoStr}" class="caricatura" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null; this.src='${logoSquadra}'; this.style.objectFit='contain'; this.parentElement.style.padding='18px'; this.parentElement.style.background='white';">`;
+    } else {
+        imgHtml = `<div style="display:flex; align-items:center; justify-content:center; height:100%; background:white; padding:18px; border-radius:50%; box-sizing:border-box;"><img src="${logoSquadra}" style="width:100%; height:100%; object-fit:contain;"></div>`;
+    }
+
+    // 4. ALERT ESCLUSO
+    const alertEscluso = p.isEscluso ? `<div style="background:rgba(0,0,0,0.8); color:#ff4444; font-size:11px; padding:8px; margin:10px 0; border:1px solid #ff4444; border-radius:10px; font-weight:bold; text-align:center;">⚠️ OUT: ${p.infoEscluso ? p.infoEscluso.motivo : 'Indisponibile'}</div>` : "";
+
+    // 5. GRIGLIA STATISTICHE
+    const statsHtml = isP ? `
+        <div class="stat-item"><span class="stat-val">${s.pv || 0}</span>PV</div>
+        <div class="stat-item"><span class="stat-val">${s.mv || 0}</span>MV</div>
+        <div class="stat-item"><span class="stat-val">${s.gs || 0}</span>GS</div>
+        <div class="stat-item"><span class="stat-val">${s.rp || 0}</span>RP</div>
+        <div class="stat-item"><span class="stat-val">${s.amm || 0}</span>AMM</div>
+        <div class="stat-item"><span class="stat-val">${s.esp || 0}</span>ESP</div>
+    ` : `
+        <div class="stat-item"><span class="stat-val">${s.pv || 0}</span>PV</div>
+        <div class="stat-item"><span class="stat-val">${s.mv || 0}</span>MV</div>
+        <div class="stat-item"><span class="stat-val">${s.gf || 0}</span>GOL</div>
+        <div class="stat-item"><span class="stat-val">${s.ass || 0}</span>ASS</div>
+        <div class="stat-item"><span class="stat-val">${s.amm || 0}</span>AMM</div>
+        <div class="stat-item"><span class="stat-val">${s.esp || 0}</span>ESP</div>
+    `;
+
+    // 6. LABEL PREVISIONE
+    const label = p.previsione ? p.previsione.label : (isP ? "CLEAN SHEET" : "BONUS");
+    const perc = p.previsione ? p.previsione.percentuale : (p.percentuale ? p.percentuale + "%" : "0%");
+
+    // RITORNO HTML
+    return `
+        <div class="card ${isFlop ? 'flop' : ''}" id="${cardId}">
+            <div class="download-btn-card" onclick="event.stopPropagation(); downloadCardImage('${cardId}', 'Card_${p.nome}')">FICup</div>
+            
+            <div class="card-header">
+                <div class="header-ficup">FICUP</div>
+                <div class="header-predictor">Bonus radar</div>
+            </div>
+
+            <div class="circle-frame" style="background:white; overflow:hidden;">${imgHtml}</div>
+
+            <div style="text-align:center;">
+                <div class="player-name">${p.nome.toUpperCase()}</div>
+                
+                <div class="tit-container" style="font-size:10px; font-weight:900; background:rgba(0,0,0,0.05); display:inline-block; padding:2px 8px; border-radius:10px;">
+                    TITOLARITÀ: ${titDisplay}
+                </div>
+                
+                ${alertEscluso}
+            </div>
+
+            <div class="team-box">
+                <img src="${logoSquadra}" class="team-logo-mini">
+                <div class="team-name-mini">${p.squadra.toUpperCase()}</div>
+            </div>
+
+            <div class="stats-grid">${statsHtml}</div>
+            
+            <div class="bonus-container" style="display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:15px; min-height:5px;"></div>
+
+            <div class="badge-black">${label}: ${perc}</div>
+        </div>`;
+}
+
+
+
+
+
+
+
+
+
+
+    function doSearch() {
+    const n = $('#pSearch').val();
+    if(!n) return;
+    $('#card-container').html('<p style="text-align:center; color:var(--sisal-green)">Analisi in corso...</p>');
+    
+    $.ajax({
+        url: SCRIPT_URL + "?nome=" + encodeURIComponent(n),
+        dataType: 'jsonp',
+        success: function(res) { 
+            if(res && res.success) {
+                $('#card-container').html(buildCard(res)); 
+            } else {
+                $('#card-container').html('<p style="text-align:center; color:white">Giocatore non trovato nel database.</p>');
+            }
+        },
+        error: function() {
+            $('#card-container').html('<p style="text-align:center; color:red">Errore di connessione al server.</p>');
+        }
+    });
+}
+
+
+    function doTop() {
+    $('#card-container').html('<p style="text-align:center; color:var(--sisal-green)">🏆 Elaborazione Top/Flop in corso...</p>');
+    $.ajax({
+        url: SCRIPT_URL + "?action=getConsigli",
+        dataType: 'jsonp',
+        success: function(res) {
+            if (!res || (!res.consigliati && !res.sconsigliati)) {
+                $('#card-container').html('<p style="text-align:center; color:white;">Nessun consiglio disponibile. Controlla i dati nel Foglio!</p>');
+                return;
+            }
+            let h = "";
+            const ruoli = ['P','D','C','A'];
+            
+            h += `<h2 style="text-align:center; font-family:Oswald; color:var(--sisal-green);">TOP DELLA GIORNATA</h2>`;
+            ruoli.forEach(r => { 
+                if(res.consigliati && res.consigliati[r]) {
+                    res.consigliati[r].forEach(p => h += buildCard(p, false)); 
+                }
+            });
+            
+            h += `<h2 style="text-align:center; font-family:Oswald; color:#ff0044; margin-top:40px;">FLOP DELLA GIORNATA</h2>`;
+            ruoli.forEach(r => { 
+                if(res.sconsigliati && res.sconsigliati[r]) {
+                    res.sconsigliati[r].forEach(p => h += buildCard(p, true)); 
+                }
+            });
+            
+            $('#card-container').html(h);
+        },
+        error: function() {
+            $('#card-container').html('<p style="text-align:center; color:red">Errore critico nel recupero consigli.</p>');
+        }
+    });
+}
+
+
+    function saveImage() {
+        const n = $('#pSearch').val(); const u = $('#pImg').val();
+        if(!n || !u) return alert("Inserisci nome e URL!");
+        $.ajax({
+            url: SCRIPT_URL + "?action=saveImg&nome="+encodeURIComponent(n)+"&url="+encodeURIComponent(u),
+            dataType: 'jsonp',
+            success: function() { alert("Foto salvata!"); doSearch(); }
+        });
+    }
+    function setupSearch() {
+    $('#pSearch').on('input', function() {
+        let val = $(this).val().toLowerCase();
+        if(val.length < 2) { $('#suggestions').hide(); return; }
+        
+        // Filtra il database per nome
+        let matches = database.filter(p => p.nome.toLowerCase().includes(val)).slice(0, 5);
+        
+        let html = matches.map(p => `
+            <div class="suggest-item" onclick="selectPlayer('${p.nome.replace(/'/g, "\\'")}')">
+                ${p.nome} (${p.squadra})
+            </div>`).join('');
+            
+        $('#suggestions').html(html).show();
+    });
+}
+function downloadCardImage(cardId, fileName) {
+    // Creiamo un mini-modal personalizzato invece del prompt di sistema
+    const pwdOverlay = document.createElement('div');
+    pwdOverlay.id = "password-overlay";
+    pwdOverlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:20000; display:flex; flex-direction:column; align-items:center; justify-content:center;";
+    
+    pwdOverlay.innerHTML = `
+        <div style="background:#222; padding:20px; border-radius:15px; border:1px solid #00ff88; text-align:center; width:80%; max-width:300px;">
+            <p style="color:white; font-family:sans-serif; margin-bottom:15px;">Inserisci Password Admin:</p>
+            <input type="password" id="admin-pwd-input" style="width:100%; padding:10px; border-radius:5px; border:none; margin-bottom:15px; text-align:center;">
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button id="confirm-pwd" style="padding:10px; background:#00ff88; color:black; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">OK</button>
+                <button id="cancel-pwd" style="padding:10px; background:#ff4444; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer;">ANNULLA</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(pwdOverlay);
+
+    // Gestione tasto Annulla
+    document.getElementById('cancel-pwd').onclick = () => pwdOverlay.remove();
+
+    // Gestione tasto OK
+    document.getElementById('confirm-pwd').onclick = () => {
+        const inputVal = document.getElementById('admin-pwd-input').value;
+        
+        if (inputVal === "Admin25") {
+            pwdOverlay.remove();
+            processDownload(cardId, fileName); // Avvia la cattura
+        } else {
+            alert("Password errata!");
+        }
+    };
+}
+
+// Funzione separata per la generazione immagine
+function processDownload(cardId, fileName) {
+    const card = document.getElementById(cardId);
+    const btn = card.querySelector('.download-btn-card');
+    
+    if (btn) btn.style.display = 'none';
+
+    // OPZIONI PRO PER ALTA QUALITÀ
+    html2canvas(card, {
+        backgroundColor: null,
+        scale: 3,               // Aumenta la densità dei pixel (3 è ideale per la stampa/condivisione HD)
+        useCORS: true,          // Fondamentale per caricare loghi da URL esterni in alta risoluzione
+        allowTaint: false,      // Migliora la sicurezza del rendering
+        logging: false,         // Velocizza il processo
+        imageTimeout: 0,        // Attende che tutte le immagini siano caricate al 100%
+        dpi: 300,               // Simula una risoluzione  stampa professionale
+                onclone: (clonedDoc) => {
+            const clonedCard = clonedDoc.getElementById(cardId);
+            
+            // 1. Resetta la scala per la cattura
+            clonedCard.style.transform = "scale(1)";
+            
+             // Forza il contenitore a non allargarsi
+    const teamBox = clonedCard.querySelector('.team-box');
+    if (teamBox) {
+        teamBox.style.width = '100%';
+        teamBox.style.display = 'flex';
+        teamBox.style.flexDirection = 'column';
+        teamBox.style.alignItems = 'center';
+    }
+
+            // 2. Forza i loghi piccoli a mantenere le proporzioni corrette
+            // Questo evita l'effetto "allargato" che vedi su alcuni loghi
+            const miniLogos = clonedCard.querySelectorAll('.team-logo-mini');
+            miniLogos = clonedCard.querySelectorAll('.team-logo-mini');
+    miniLogos.forEach(img => {
+        // Blocchiamo le dimensioni fisiche in pixel per lo scatto
+        img.style.width = '35px';          
+        img.style.minWidth = '35px';      // Cruciale per evitare l'allargamento
+        img.style.maxWidth = '35px';      // Cruciale per evitare l'allargamento
+        img.style.height = '35px';         
+        img.style.objectFit = 'contain';    
+        img.style.display = 'block';
+    });
+
+            // 3. Opzionale: Forza anche il logo nel cerchio se necessario
+            const mainLogo = clonedCard.querySelector('.circle-frame img.logo-fallback');
+            if (mainLogo) {
+                mainLogo.style.width = 'auto';
+                mainLogo.style.height = 'auto';
+                mainLogo.style.maxWidth = '75%';
+                mainLogo.style.maxHeight = '75%';
+                mainLogo.style.objectFit = 'contain';
+            }
+        }
+
+    }).then(canvas => {
+        if (btn) btn.style.display = 'block';
+
+        // Esportiamo in PNG (lossless) invece di JPEG per mantenere i bordi perfetti
+        const imageData = canvas.toDataURL("image/png", 1.0);
+        
+        const overlay = document.createElement('div');
+        overlay.id = "temp-download-overlay";
+        overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:30000; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px; box-sizing:border-box;";
+
+        overlay.innerHTML = `
+            <div style="width:100%; text-align:center;">
+                <p style="color:var(--sisal-green); font-family:Oswald; font-size:20px; margin-bottom:10px; text-shadow: 0 0 10px rgba(163,255,0,0.5);">
+                    ✨ CARD HD GENERATA ✨
+                </p>
+                <p style="color:white; font-family:Inter; font-size:12px; margin-bottom:15px; opacity:0.7;">
+                    Tieni premuto sull'immagine per salvarla in galleria
+                </p>
+                <div style="max-height:70vh; overflow-y:auto; border-radius:20px; display:inline-block; box-shadow: 0 0 40px rgba(0,0,0,1);">
+                    <img src="${imageData}" style="max-width:95%; height:auto; border:1px solid #333; border-radius:18px;">
+                </div>
+                <br>
+                <button onclick="document.getElementById('temp-download-overlay').remove()" 
+                        style="margin-top:20px; padding:15px 35px; background:white; color:black; border:none; border-radius:50px; font-family:Oswald; font-size:16px; font-weight:bold; cursor:pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                    CHIUDI
+                </button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    });
+}
+
+
+
+let myCoachSquad = [];
+
+// Cerca e mostra suggerimenti nella Control Room
+function searchCoachPlayer(val) {
+    if(val.length < 2) { $('#coach-suggestions').hide(); return; }
+    let matches = database.filter(p => p.nome.toLowerCase().includes(val.toLowerCase())).slice(0, 5);
+    
+    let html = matches.map(p => `
+        <div class="suggest-item" onclick="addPlayerToCoach('${p.nome.replace(/'/g, "\\'")}')" style="padding:15px; border-bottom:1px solid #333; cursor:pointer;">
+            <span style="color:var(--neon-blue)">${p.nome}</span> <small style="color:#888">(${p.squadra})</small>
+        </div>`).join('');
+    $('#coach-suggestions').html(html).show();
+}
+
+// Aggiunge un giocatore alla lista del Coach
+function addPlayerToCoach(nome) {
+    const player = database.find(p => p.nome === nome);
+    if (player && !myCoachSquad.find(p => p.nome === nome)) {
+        myCoachSquad.push(player);
+        renderCoachRoom();
+    }
+    $('#coach-search').val('');
+    $('#coach-suggestions').hide();
+}
+
+// Rimuove un giocatore
+function removePlayerFromCoach(nome) {
+    myCoachSquad = myCoachSquad.filter(p => p.nome !== nome);
+    renderCoachRoom();
+}
+
+function clearCoachSquad() {
+    if(confirm("Vuoi svuotare la Control Room?")) {
+        myCoachSquad = [];
+        renderCoachRoom();
+    }
+}
+
+// Renderizza i mini-panel dei calciatori
+function renderCoachRoom() {
+    if (myCoachSquad.length === 0) {
+        $('#coach-empty-msg').show();
+        $('#coach-list-display').html('');
+        return;
+    }
+    $('#coach-empty-msg').hide();
+
+    let html = myCoachSquad.map(p => {
+        const perc = parseFloat(p.percentuale) || 0;
+        const tit = parseInt(p.titolarita) || 0;
+        
+        let verdetto = { label: "RISCHIA", color: "#ffa500", icon: "⚠️" };
+        if (p.isEscluso) {
+            verdetto = { label: "OUT", color: "#ff4444", icon: "❌" };
+        } else if (perc >= 60 && tit >= 60) {
+            verdetto = { label: "TOP", color: "var(--sisal-green)", icon: "🔥" };
+        } else if (perc < 45) {
+            verdetto = { label: "EVITA", color: "#888", icon: "📉" };
+        }
+
+        return `
+            <div style="background:#0b0d0f; border:1px solid #333; border-radius:12px; padding:12px; margin-bottom:8px; display:flex; align-items:center; position:relative; border-left: 4px solid ${verdetto.color};">
+                <div style="flex:1;">
+                    <div style="font-family:Oswald; font-size:16px; color:white;">${p.nome.toUpperCase()}</div>
+                    <div style="font-size:10px; color:#666;">${p.squadra} • ${p.ruolo}</div>
+                </div>
+                
+                <div style="text-align:right; margin-right:30px;">
+                    <div style="color:${verdetto.color}; font-weight:900; font-size:11px;">${verdetto.icon} ${verdetto.label}</div>
+                    <div style="font-size:10px; color:#444;">Bonus: ${perc}%</div>
+                </div>
+
+                <button onclick="removePlayerFromCoach('${p.nome.replace(/'/g, "\\'")}')" style="background:none; border:none; color:#444; font-size:18px; position:absolute; right:8px; top:12px; cursor:pointer;">×</button>
+            </div>
+        `;
+    }).join('');
+
+    $('#coach-list-display').html(html);
+}
+function startAppWithLog() {
+    const nomeUtente = $('#user-login-name').val().trim();
+
+    if (nomeUtente === "") {
+        alert("Per favore, inserisci un nome per accedere!");
+        return;
+    }
+
+    // Mostriamo il loader mentre registriamo l'accesso
+    $('#loader-global').removeClass('hidden');
+
+    // Salviamo il nome localmente (opzionale, utile per sessione)
+    localStorage.setItem('fanta_user_session', nomeUtente);
+
+    // Chiamata al backend per registrare il log
+    $.ajax({
+        url: SCRIPT_URL + "?action=logAccesso&nomeUtente=" + encodeURIComponent(nomeUtente),
+        dataType: 'jsonp',
+        success: function(response) {
+            console.log("Log registrato:", response);
+            // Una volta registrato il log, avviamo l'app
+            $('#page-home').fadeOut(500, function() {
+                $('#main-app').show();
+                loadData();
+            });
+        },
+        error: function() {
+            // Se il log fallisce, entriamo comunque per non bloccare l'utente
+            console.error("Errore registrazione log");
+            startApp(); 
+        }
+    });
+}
+// Funzione per il Login Admin
+function checkAdmin() {
+    const pass = $('#admin-pass').val();
+    if(pass === "Admin25") { 
+        $('#admin-tools').show();
+        $('#btn-login-admin').hide();
+        $('#admin-pass').hide();
+    } else {
+        alert("Password errata!");
+    }
+}
+
+// Funzione per salvare la foto (richiesta dal tasto Admin)
+function saveImage() {
+    const n = $('#pSearch').val(); 
+    const u = $('#pImg').val();
+    if(!n || !u) return alert("Inserisci nome calciatore e URL immagine!");
+    
+    // Mostra un piccolo feedback di caricamento
+    $('#loader-global').removeClass('hidden');
+    
+    $.ajax({
+        url: SCRIPT_URL + "?action=saveImg&nome=" + encodeURIComponent(n) + "&url=" + encodeURIComponent(u),
+        dataType: 'jsonp',
+        success: function(res) { 
+            $('#loader-global').addClass('hidden');
+            alert("Foto salvata correttamente nel database!"); 
+            // Pulisce i campi
+            $('#pSearch').val('');
+            $('#pImg').val('');
+            // Ricarica i dati per vedere subito la modifica
+            loadData();
+        },
+        error: function() {
+            $('#loader-global').addClass('hidden');
+            alert("Errore durante il salvataggio.");
+        }
+    });
+}
+// Funzione per cercare calciatori nel pannello Admin
+function searchAdminPlayer(val) {
+    if(val.length < 2) { $('#admin-suggestions').hide(); return; }
+    
+    let matches = database.filter(p => p.nome.toLowerCase().includes(val.toLowerCase())).slice(0, 5);
+    
+    let html = matches.map(p => `
+        <div class="suggest-item" onclick="generateAdminCard('${p.nome.replace(/'/g, "\\'")}')" style="padding:12px; border-bottom:1px solid #333; cursor:pointer; text-align:left;">
+            <span style="color:var(--sisal-green)">${p.nome}</span> <small style="color:#777">(${p.squadra})</small>
+        </div>`).join('');
+        
+    $('#admin-suggestions').html(html).show();
+}
+
+// Funzione che scarica i dati e costruisce la card nell'Admin
+function generateAdminCard(nome) {
+    $('#admin-suggestions').hide();
+    $('#admin-pSearch-card').val(nome);
+    $('#admin-card-preview').html('<p style="color:var(--sisal-green)">Generazione card...</p>');
+
+    $.ajax({
+        url: SCRIPT_URL + "?nome=" + encodeURIComponent(nome),
+        dataType: 'jsonp',
+        success: function(res) { 
+            if(res.success) {
+                // Generiamo la card
+                let cardHtml = buildCard(res, res.score < 10);
+                
+                // La inseriamo dentro un contenitore che azzera i margini e centra con text-align
+                $('#admin-card-preview').html(
+                    '<div style="width:100%; text-align:center; display:block;">' + cardHtml + '</div>'
+                );
+            } else {
+                $('#admin-card-preview').html('<p style="color:red">Errore: Dati non trovati.</p>');
+            }
+        }
+    });
+}
+
+
+function addBadgeToCard(text) {
+    const card = document.querySelector("#admin-card-preview .card");
+    const container = document.querySelector("#admin-card-preview .bonus-container");
+    if (!container) return alert("Genera prima la card!");
+
+    // Attiva la sparizione del badge nero standard
+    card.classList.add("has-badges");
+
+    const div = document.createElement("div");
+    
+    // Determina il colore in base al testo
+    let colorClass = "ribbon-blue";
+    if (text.includes('+3') || text.includes('+6') || text.includes('+9')) colorClass = "ribbon-green";
+    if (text.includes('-')) colorClass = "ribbon-red";
+    if (text.includes('TOP') || text.includes('MVP')) colorClass = "ribbon-gold";
+
+    div.className = `spectacular-ribbon ${colorClass}`;
+    div.innerHTML = `<span>${text}</span>`;
+    
+    // Se clicchi sul badge, lo rimuovi. Se è l'ultimo, riappare il badge nero.
+    div.onclick = function() { 
+        this.remove(); 
+        if (container.children.length === 0) {
+            card.classList.remove("has-badges");
+        }
+    };
+    
+    container.appendChild(div);
+}
+
+
+function liveEdit(statName, change) {
+    const items = document.querySelectorAll("#admin-card-preview .stat-item");
+    items.forEach(item => {
+        if (item.innerText.includes(statName)) {
+            const valEl = item.querySelector(".stat-val");
+            let val = parseInt(valEl.innerText) || 0;
+            valEl.innerText = val + change;
+            valEl.style.color = "white"; // Feedback visivo
+            setTimeout(() => { valEl.style.color = ""; }, 300);
+        }
+    });spectacular-ribbon
+}
+
+function resetAdminCard() {
+    const nome = $('#admin-pSearch-card').val();
+    if(nome) generateAdminCard(nome);
+}
+
+
+
+</script>
+
+<div id="modal-card" style="position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:5000; display:none; justify-content:center; align-items:center; overflow-y: auto; padding: 20px;">
+    <button onclick="$('#modal-card').fadeOut()" style="position: absolute; top: 20px; right: 20px; background: var(--sisal-green); border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; z-index: 5001;">✕</button>
+    <div id="modal-content" onclick="event.stopPropagation()">
+        </div>
+</div>
+
+
+</body>
+</html>
+
