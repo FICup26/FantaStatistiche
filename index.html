@@ -1769,9 +1769,37 @@ function renderSurp11() {
 
 
 // Nuova funzione per aprire la card al clic
+// 1. NUOVA FUNZIONE DI APERTURA: APRE IL MENU DI SCELTA
 function openPlayerCard(nome) {
+    const p = database.find(x => x.nome === nome);
+    if(!p) return;
+
+    const menuHtml = `
+        <div id="choice-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:100000; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+            <div style="background:#1a1f24; padding:25px; border-radius:24px; border:1px solid var(--sisal-green); text-align:center; width:85%; max-width:320px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                <div style="font-family:Oswald; font-size:22px; color:white; margin-bottom:5px; text-transform:uppercase;">${p.nome}</div>
+                <div style="font-size:12px; color:var(--sisal-green); font-weight:bold; margin-bottom:25px; letter-spacing:1px;">${p.squadra.toUpperCase()}</div>
+                
+                <button onclick="showFinalCard('${p.nome.replace(/'/g, "\\'")}')" style="width:100%; padding:16px; margin-bottom:12px; border-radius:14px; border:none; background:var(--sisal-green); color:black; font-family:Oswald; font-size:16px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <span>✨</span> MOSTRA CARD
+                </button>
+                
+                <button onclick="showAnalysis('${p.nome.replace(/'/g, "\\'")}')" style="width:100%; padding:16px; margin-bottom:25px; border-radius:14px; border:1px solid var(--sisal-green); background:transparent; color:var(--sisal-green); font-family:Oswald; font-size:16px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <span>📊</span> ANALISI AI
+                </button>
+                
+                <div onclick="$('#choice-modal').remove()" style="color:#666; cursor:pointer; font-size:11px; text-transform:uppercase; font-weight:bold; letter-spacing:1px;">Annulla</div>
+            </div>
+        </div>
+    `;
+    $('body').append(menuHtml);
+}
+
+// 2. FUNZIONE PER MOSTRARE LA CARD (VECCHIA LOGICA AJAX)
+function showFinalCard(nome) {
+    $('#choice-modal').remove();
     $('#modal-card').css('display','flex').hide().fadeIn();
-    $('#modal-content').html('<p style="color:white; font-family:Oswald;">CARICAMENTO CARD...</p>');
+    $('#modal-content').html('<p style="color:white; font-family:Oswald; text-align:center; margin-top:50px;">GENERAZIONE CARD...</p>');
     $.ajax({
         url: SCRIPT_URL + "?nome=" + encodeURIComponent(nome),
         dataType: 'jsonp',
@@ -1782,54 +1810,60 @@ function openPlayerCard(nome) {
     });
 }
 
-    function selectPlayer(n) { $('#pSearch').val(n); $('#suggestions').hide(); doSearch(); }
-    
-function renderPlayerRow(p) {
-    if (!p) return "";
-    
-    const s = p.stats ? p.stats : p;
-    const isP = p.ruolo === "P";
-    const logoSquadra = LOGOS[p.squadra] || "";
-    const fotoStr = String(p.foto || "").trim();
-    
-    // Colore ruolo
-    const ruoloClass = "bg-" + (p.ruolo ? p.ruolo.toLowerCase() : 'c');
+// 3. FUNZIONE PER L'ANALISI MAGICA (USANDO I DATI GIÀ CARICATI)
+function showAnalysis(nome) {
+    $('#choice-modal').remove();
+    const p = database.find(x => x.nome === nome);
+    if(!p) return;
 
-    // Definiamo i blocchi statistiche in base al ruolo (tue info attuali)
-    const statsConfig = isP 
-        ? [ {l: 'PV', v: s.pv}, {l: 'MV', v: s.mv}, {l: 'GS', v: s.gs}, {l: 'RP', v: s.rp}, {l: 'AM', v: s.amm}, {l: 'ES', v: s.esp} ]
-        : [ {l: 'PV', v: s.pv}, {l: 'MV', v: s.mv}, {l: 'GL', v: s.gf}, {l: 'AS', v: s.ass}, {l: 'AM', v: s.amm}, {l: 'ES', v: s.esp} ];
+    const isP = p.ruolo === 'P';
+    const alertOut = p.isEscluso ? `
+        <div style="background:rgba(255,68,68,0.1); border:1px solid #ff4444; color:#ff4444; padding:12px; border-radius:12px; margin-bottom:20px; font-size:13px; text-align:center;">
+            <strong>⚠️ GIOCATORE OUT:</strong> ${p.infoEscluso ? p.infoEscluso.motivo : 'Indisponibile'}
+        </div>` : '';
 
-    return `
-        <div class="player-row-vertical">
-            <div class="player-row-top">
-                <div class="player-avatar-container" style="position:relative; width:50px; height:50px;">
-                    <div class="ruolo-badge ${ruoloClass}">${p.ruolo}</div>
-                    <img src="${fotoStr}" class="player-avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" onerror="this.src='${logoSquadra}'">
-                </div>
-                <div style="flex-grow:1;">
-                    <div style="font-weight:800; font-size:16px; text-transform:uppercase;">${p.nome}</div>
-                    <div style="font-size:12px; color:#666; display:flex; align-items:center; gap:5px;">
-                        <img src="${logoSquadra}" style="width:15px; height:15px; object-fit:contain;">
-                        ${p.squadra.toUpperCase()}
-                    </div>
-                </div>
-                <div style="background:#eef2f7; padding:5px 10px; border-radius:8px; text-align:center;">
-                    <div style="font-size:16px; font-weight:900; color:#4a5af8;">${p.prezzo || s.fvm || 0}</div>
-                    <div style="font-size:8px; font-weight:bold; color:#aaa;">QUOT.</div>
-                </div>
+    const analysisHtml = `
+        <div id="analysis-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0d0f; z-index:100001; padding:20px; overflow-y:auto; font-family: 'Inter', sans-serif; color:white;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div onclick="$('#analysis-modal').remove()" style="font-size:28px; padding:5px;">✕</div>
+                <div style="color:var(--sisal-green); font-family:Oswald; font-size:14px; letter-spacing:2px;">INSIGHT ANALYTICS</div>
+                <div style="width:30px;"></div>
             </div>
 
-            <div class="player-row-data-grid">
-                ${statsConfig.map(stat => `
-                    <div class="data-item">
-                        <span class="data-value">${stat.v || 0}</span>
-                        <span class="data-label">${stat.l}</span>
-                    </div>
-                `).join('')}
+            <div style="text-align:center; margin-bottom:30px;">
+                <h1 style="font-family:Oswald; font-size:36px; margin:0; text-transform:uppercase; letter-spacing:-1px;">${p.nome}</h1>
+                <div style="color:var(--sisal-green); font-weight:800; font-size:14px;">${p.squadra.toUpperCase()}</div>
             </div>
+
+            ${alertOut}
+
+            <div style="background:#161a1e; border-radius:20px; padding:20px; border:1px solid #333; margin-bottom:20px; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; text-align:center;">
+                <div><div style="font-size:10px; color:#666;">FM</div><div style="font-weight:bold; font-size:18px;">${p.fm || '0'}</div></div>
+                <div><div style="font-size:10px; color:#666;">MV</div><div style="font-weight:bold; font-size:18px;">${p.mv || '0'}</div></div>
+                <div><div style="font-size:10px; color:#666;">TIT.</div><div style="font-weight:bold; font-size:18px;">${p.titolarita || '0%'}</div></div>
+            </div>
+
+            <div style="background:linear-gradient(145deg, #1a1f24, #0b0d0f); border-radius:24px; padding:24px; border:1px solid #333; position:relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                <div style="color:var(--sisal-green); font-family:Oswald; font-size:18px; margin-bottom:15px; display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:20px;">⚡</span> PERCHÉ SCHIERARLO
+                </div>
+                <p style="color:#bbb; font-size:14px; line-height:1.7; margin-bottom:25px;">
+                    ${p.score > 15 ? 'I dati lo danno in uno stato di forma superiore. La probabilità di bonus è molto alta per questo turno.' : 'È un perno della squadra, garantisce continuità di voto e bonus sporadici.'} 
+                    Percentuale di Bonus stimata: <strong>${p.percentuale || '0'}%</strong>.
+                </p>
+                
+                <div style="color:#ff4444; font-family:Oswald; font-size:18px; margin-bottom:15px; display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:20px;">⚠️</span> PERCHÉ NO
+                </div>
+                <p style="color:#bbb; font-size:14px; line-height:1.7;">
+                    ${p.isEscluso ? 'Attenzione: il giocatore è indisponibile, schierarlo comporterebbe un rischio SV.' : p.score < 10 ? 'Il match di questa settimana è proibitivo. Le statistiche prevedono un calo della fanta-media o rischio malus.' : 'Le insidie sono basse, ma attenzione a possibili staffette nella ripresa.'}
+                </p>
+            </div>
+
+            <button onclick="$('#analysis-modal').remove()" style="width:100%; margin-top:30px; padding:18px; border-radius:50px; border:none; background:#222; color:white; font-family:Oswald; font-weight:bold; letter-spacing:1px; cursor:pointer;">CHIUDI ANALISI</button>
         </div>
     `;
+    $('body').append(analysisHtml);
 }
 
 
@@ -2290,6 +2324,61 @@ function showIndisponibili() {
     html += `</div></div>`;
     $('body').append(html);
 }
+
+function showAnalysis(nome) {
+    $('#choice-modal').remove();
+    const p = database.find(x => x.nome === nome);
+    if(!p) return;
+
+    const isP = p.ruolo === 'P';
+    const s = p.stats || p;
+    const alertOut = p.isEscluso ? `<div style="background:#ff444422; border:1px solid #ff4444; color:#ff4444; padding:10px; border-radius:10px; margin-bottom:15px; font-size:13px;"><strong>⚠️ STATO:</strong> ${p.infoEscluso ? p.infoEscluso.motivo : 'Indisponibile/Squalificato'}</div>` : '';
+
+    const analysisHtml = `
+        <div id="analysis-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#0b0d0f; z-index:100001; padding:20px; overflow-y:auto; font-family: 'Inter', sans-serif;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                <span onclick="$('#analysis-modal').remove()" style="color:white; font-size:24px;">✕</span>
+                <span style="color:var(--sisal-green); font-family:Oswald; font-size:18px;">REPORT ANALISI</span>
+                <div style="width:24px;"></div>
+            </div>
+
+            <div style="text-align:center; margin-bottom:25px;">
+                <div style="font-family:Oswald; font-size:32px; color:white; text-transform:uppercase;">${p.nome}</div>
+                <div style="color:var(--sisal-green); font-weight:bold; letter-spacing:2px;">${p.squadra.toUpperCase()}</div>
+            </div>
+
+            ${alertOut}
+
+            <div style="background:#161a1e; border-radius:20px; padding:20px; border:1px solid #333; margin-bottom:20px;">
+                <h4 style="color:var(--sisal-green); font-family:Oswald; margin-top:0;">📊 RENDIMENTO STAGIONALE</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div style="color:#888; font-size:13px;">Fanta Media: <strong style="color:white">${p.fm || '0'}</strong></div>
+                    <div style="color:#888; font-size:13px;">Media Voto: <strong style="color:white">${p.mv || '0'}</strong></div>
+                    <div style="color:#888; font-size:13px;">${isP ? 'Gol Subiti' : 'Gol Segnati'}: <strong style="color:white">${isP ? (p.gs||0) : (p.gf||0)}</strong></div>
+                    <div style="color:#888; font-size:13px;">Assist: <strong style="color:white">${p.ass || '0'}</strong></div>
+                </div>
+            </div>
+
+            <div style="background:linear-gradient(145deg, #161a1e, #0b0d0f); border-radius:20px; padding:20px; border:1px solid #333; position:relative; overflow:hidden;">
+                <div style="position:absolute; top:-10px; right:-10px; font-size:80px; color:rgba(0,255,136,0.03); font-weight:900;">AI</div>
+                <h4 style="color:var(--sisal-green); font-family:Oswald; margin-top:0;">✨ PERCHÈ SCHIERARLO</h4>
+                <p style="color:#ccc; font-size:14px; line-height:1.6;">
+                    ${p.score > 15 ? 'Il giocatore attraversa un momento di forma eccellente. I dati indicano un\'alta probabilità di bonus per questa giornata.' : 'Garantisce un voto solido e una presenza costante in area avversaria.'} 
+                    Ha una titolarità del ${p.titolarita || '0%'} e la sua percentuale di bonus è stimata al <strong>${p.percentuale || '0'}%</strong>.
+                </p>
+                
+                <h4 style="color:#ff4444; font-family:Oswald; margin-top:20px;">⚠️ PERCHÈ NO</h4>
+                <p style="color:#ccc; font-size:14px; line-height:1.6;">
+                    ${p.isEscluso ? 'Attenzione: risulta ufficialmente fuori dai convocati.' : p.score < 10 ? 'La partita si preannuncia complicata e il rischio di malus o insufficienza è superiore alla media stagionale.' : 'Nessun segnale critico particolare, ma monitora il ballottaggio fino all\'ultimo.'}
+                </p>
+            </div>
+
+            <button onclick="$('#analysis-modal').remove()" style="width:100%; margin-top:30px; padding:15px; border-radius:50px; border:none; background:#333; color:white; font-family:Oswald; font-weight:bold;">TORNA ALLA LISTA</button>
+        </div>
+    `;
+    $('body').append(analysisHtml);
+}
+
 
 // Funzione per il Login Admin
 function checkAdmin() {
