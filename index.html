@@ -1148,6 +1148,10 @@
                    placeholder="Aggiungi calciatori alla tua lista..." oninput="searchCoachPlayer(this.value)">
             <div id="coach-suggestions" style="position: absolute; width: 100%; background: #1a1f24; z-index: 100; border-radius: 0 0 15px 15px; border: 1px solid #333; display:none;"></div>
         </div>
+        
+        <button onclick="showIndisponibili()" style="background:#ff4444; color:white; border:none; padding:10px; border-radius:8px; margin-top:10px; font-family:Oswald; cursor:pointer; width:100%;">
+            🚫 VEDI INDISPONIBILI / SQUALIFICATI
+        </button>
 
         <div id="my-squad-container" style="margin-top:15px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -1336,7 +1340,7 @@
 
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwre1GHJA2k-738KWUeaSSskWCplIr8YU1KtNQ2nmGv_tUNoHBuhmRtN6A0hpDSSOS5Fw/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwjkHveJIwA274YCB0u5c45nuDFwIweHpLQT6FHsSB400_Ohp8pIpldRhMNjFJvu-Ir/exec";
     let database = [];
     let currentTeam = "TUTTE";
     let currentRole = "TUTTI";
@@ -1407,23 +1411,27 @@ function togglePitch(type) {
 
 
     function renderTop11() {
-    // Troviamo il contenitore specifico del Top (Verde)
     const container = $('#wrapper-pitch-top .stadium-container');
-    container.attr('id', 'stadium-top'); // Assegniamo un ID se manca
+    container.attr('id', 'stadium-top');
     container.css('position', 'relative');
     container.find('.download-btn-card').remove();
     container.prepend(`<div class="download-btn-card" onclick="event.stopPropagation(); downloadCardImage('stadium-top', 'Top11_Verde')">✨</div>`);
 
+    if (!database || database.length === 0) return;
 
     const playersDisponibili = [...database].filter(p => {
-        const titolaritaVal = parseInt(p.titolarita) || 0;
-        return !p.isEscluso && titolaritaVal >= 40;
+        // Pulizia sicura della titolarità (rimuove % e spazi)
+        const titVal = parseInt(String(p.titolarita || "0").replace(/[^0-9]/g, "")) || 0;
+        return !p.isEscluso && titVal >= 40;
     });
-    playersDisponibili.sort((a, b) => b.score - a.score);
+
+    // Ordinamento sicuro per score
+    playersDisponibili.sort((a, b) => (parseFloat(b.score) || 0) - (parseFloat(a.score) || 0));
+
     const formazione = { gk: [], def: [], mid: [], att: [] };
     const pickUniqueByRole = (role, count) => {
         const squadreUsate = new Set();
-        const filtered = playersDisponibili.filter(p => p.ruolo.toUpperCase() === role.toUpperCase());
+        const filtered = playersDisponibili.filter(p => (p.ruolo || "").toUpperCase() === role.toUpperCase());
         let picked = 0;
         for (let p of filtered) {
             if (!squadreUsate.has(p.squadra) && picked < count) {
@@ -1434,15 +1442,25 @@ function togglePitch(type) {
             }
         }
     };
+
     pickUniqueByRole('P', 1); pickUniqueByRole('D', 3); pickUniqueByRole('C', 4); pickUniqueByRole('A', 3);
+
     const createPitchHTML = (p) => {
         const fotoUrl = String(p.foto || "").trim();
         const logoSquadra = LOGOS[p.squadra] || "";
-        let n = p.nome.split(' ');
+        let n = (p.nome || "Player").split(' ');
         let nomeVisualizzato = (n.length > 1 && n[0].length <= 3) ? n[0] + " " + n[1] : n[0];
-        let imgHtml = fotoUrl.toLowerCase().startsWith('http') ? `<img src="${fotoUrl}" class="pitch-player-img">` : `<img src="${logoSquadra}" class="pitch-player-img logo-fallback">`;
-        return `<div class="pitch-player" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')">${imgHtml}<div class="pitch-player-name">${nomeVisualizzato.toUpperCase()}</div><div style="font-size:8px; color:#0a5d0a; font-weight:bold; background:white; border-radius:4px; margin-top:2px; padding: 1px 3px; border: 1px solid var(--sisal-green);">${p.squadra}</div></div>`;
+        let imgHtml = fotoUrl.toLowerCase().startsWith('http') 
+            ? `<img src="${fotoUrl}" class="pitch-player-img" onerror="this.src='${logoSquadra}';this.classList.add('logo-fallback');">` 
+            : `<img src="${logoSquadra}" class="pitch-player-img logo-fallback">`;
+        
+        return `<div class="pitch-player" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')">
+                    ${imgHtml}
+                    <div class="pitch-player-name">${nomeVisualizzato.toUpperCase()}</div>
+                    <div style="font-size:8px; color:#0a5d0a; font-weight:bold; background:white; border-radius:4px; margin-top:2px; padding: 1px 3px; border: 1px solid var(--sisal-green);">${p.squadra}</div>
+                </div>`;
     };
+
     $('#pitch-gk').html(formazione.gk.map(createPitchHTML).join(''));
     $('#pitch-def').html(formazione.def.map(createPitchHTML).join(''));
     $('#pitch-mid').html(formazione.mid.map(createPitchHTML).join(''));
@@ -1456,16 +1474,20 @@ function renderFlop11() {
     container.find('.download-btn-card').remove();
     container.prepend(`<div class="download-btn-card" onclick="event.stopPropagation(); downloadCardImage('stadium-flop-id', 'Flop11_Rosso')">✨</div>`);
 
+    if (!database || database.length === 0) return;
 
     const playersDisponibili = [...database].filter(p => {
-        const titolaritaVal = parseInt(p.titolarita) || 0;
-        return !p.isEscluso && titolaritaVal >= 40;
+        const titVal = parseInt(String(p.titolarita || "0").replace(/[^0-9]/g, "")) || 0;
+        return !p.isEscluso && titVal >= 40;
     });
-    playersDisponibili.sort((a, b) => a.score - b.score);
+
+    // Ordinamento inverso per i FLOP (score più basso in alto)
+    playersDisponibili.sort((a, b) => (parseFloat(a.score) || 0) - (parseFloat(b.score) || 0));
+
     const formazioneFlop = { gk: [], def: [], mid: [], att: [] };
     const pickUniqueByRole = (role, count) => {
         const squadreUsate = new Set();
-        const filtered = playersDisponibili.filter(p => p.ruolo.toUpperCase() === role.toUpperCase());
+        const filtered = playersDisponibili.filter(p => (p.ruolo || "").toUpperCase() === role.toUpperCase());
         let picked = 0;
         for (let p of filtered) {
             if (!squadreUsate.has(p.squadra) && picked < count) {
@@ -1476,13 +1498,20 @@ function renderFlop11() {
             }
         }
     };
+
     pickUniqueByRole('P', 1); pickUniqueByRole('D', 3); pickUniqueByRole('C', 4); pickUniqueByRole('A', 3);
+
     const createFlopPitchHTML = (p) => {
         const logoSquadra = LOGOS[p.squadra] || "";
-        let n = p.nome.split(' ');
+        let n = (p.nome || "Player").split(' ');
         let nomeVisualizzato = (n.length > 1 && n[0].length <= 3) ? n[0] + " " + n[1] : n[0];
-        return `<div class="pitch-player" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')"><img src="${logoSquadra}" class="pitch-player-img logo-fallback" style="border-color:#ff0044"><div class="pitch-player-name" style="background:#ff0044">${nomeVisualizzato.toUpperCase()}</div><div style="font-size:8px; color:#ff0044; font-weight:bold; background:white; border-radius:4px; margin-top:2px; padding: 1px 3px; border: 1px solid #ff0044;">${p.squadra}</div></div>`;
+        return `<div class="pitch-player" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')">
+                    <img src="${logoSquadra}" class="pitch-player-img logo-fallback" style="border-color:#ff0044">
+                    <div class="pitch-player-name" style="background:#ff0044">${nomeVisualizzato.toUpperCase()}</div>
+                    <div style="font-size:8px; color:#ff0044; font-weight:bold; background:white; border-radius:4px; margin-top:2px; padding: 1px 3px; border: 1px solid #ff0044;">${p.squadra}</div>
+                </div>`;
     };
+
     $('#flop-gk').html(formazioneFlop.gk.map(createFlopPitchHTML).join(''));
     $('#flop-def').html(formazioneFlop.def.map(createFlopPitchHTML).join(''));
     $('#flop-mid').html(formazioneFlop.mid.map(createFlopPitchHTML).join(''));
@@ -1496,28 +1525,35 @@ function renderSurp11() {
     container.find('.download-btn-card').remove();
     container.prepend(`<div class="download-btn-card" onclick="event.stopPropagation(); downloadCardImage('stadium-surp-id', 'Surprise11_Blu')">✨</div>`);
 
+    if (!database || database.length === 0) return;
 
     const nomiTop11 = [];
     $('#pitch-gk, #pitch-def, #pitch-mid, #pitch-att').find('.pitch-player-name').each(function() {
         nomiTop11.push($(this).text().trim().toLowerCase());
     });
+
     const portieriDisponibili = [...database].filter(p => {
-        const tit = parseInt(p.titolarita) || 0;
-        const nomeSemplice = p.nome.split(' ')[0].toLowerCase();
-        return !p.isEscluso && tit >= 40 && p.ruolo.toUpperCase() === 'P' && !nomiTop11.includes(nomeSemplice);
+        const titVal = parseInt(String(p.titolarita || "0").replace(/[^0-9]/g, "")) || 0;
+        const nomeSemplice = (p.nome || "").split(' ')[0].toLowerCase();
+        return !p.isEscluso && titVal >= 40 && (p.ruolo || "").toUpperCase() === 'P' && !nomiTop11.includes(nomeSemplice);
     });
+
     const altriDisponibili = [...database].filter(p => {
-        const tit = parseInt(p.titolarita) || 0;
-        const nomeSemplice = p.nome.split(' ')[0].toLowerCase();
-        return !p.isEscluso && tit >= 40 && p.ruolo.toUpperCase() !== 'P' && (parseFloat(p.score) || 0) >= 10 && !nomiTop11.includes(nomeSemplice);
+        const titVal = parseInt(String(p.titolarita || "0").replace(/[^0-9]/g, "")) || 0;
+        const nomeSemplice = (p.nome || "").split(' ')[0].toLowerCase();
+        const scoreVal = parseFloat(p.score) || 0;
+        return !p.isEscluso && titVal >= 40 && (p.ruolo || "").toUpperCase() !== 'P' && scoreVal >= 10 && !nomiTop11.includes(nomeSemplice);
     });
-    portieriDisponibili.sort((a, b) => b.score - a.score);
-    altriDisponibili.sort((a, b) => b.percentuale - a.percentuale);
+
+    portieriDisponibili.sort((a, b) => (parseFloat(b.score) || 0) - (parseFloat(a.score) || 0));
+    altriDisponibili.sort((a, b) => (parseFloat(b.percentuale) || 0) - (parseFloat(a.percentuale) || 0));
+
     const formazioneSurp = { gk: [], def: [], mid: [], att: [] };
     if(portieriDisponibili.length > 0) formazioneSurp.gk.push(portieriDisponibili[0]);
+
     const pickUniqueByRole = (role, count) => {
         const squadreUsate = new Set();
-        const filtered = altriDisponibili.filter(p => p.ruolo.toUpperCase() === role.toUpperCase());
+        const filtered = altriDisponibili.filter(p => (p.ruolo || "").toUpperCase() === role.toUpperCase());
         let picked = 0;
         for (let p of filtered) {
             if (!squadreUsate.has(p.squadra) && picked < count) {
@@ -1528,13 +1564,20 @@ function renderSurp11() {
             }
         }
     };
+
     pickUniqueByRole('D', 3); pickUniqueByRole('C', 4); pickUniqueByRole('A', 3);
+
     const createSurpHTML = (p) => {
         const logoSquadra = LOGOS[p.squadra] || "";
-        let n = p.nome.split(' ');
+        let n = (p.nome || "Player").split(' ');
         let nomeVisualizzato = (n.length > 1 && n[0].length <= 3) ? n[0] + " " + n[1] : n[0];
-        return `<div class="pitch-player" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')"><img src="${logoSquadra}" class="pitch-player-img logo-fallback" style="border-color:#007bff; background:white;"><div class="pitch-player-name" style="background:#007bff; color:white;">${nomeVisualizzato.toUpperCase()}</div><div style="font-size:8px; color:#007bff; font-weight:bold; background:white; border-radius:4px; margin-top:2px; padding: 1px 3px; border: 1px solid #007bff;">${p.squadra}</div></div>`;
+        return `<div class="pitch-player" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')">
+                    <img src="${logoSquadra}" class="pitch-player-img logo-fallback" style="border-color:#007bff; background:white;">
+                    <div class="pitch-player-name" style="background:#007bff; color:white;">${nomeVisualizzato.toUpperCase()}</div>
+                    <div style="font-size:8px; color:#007bff; font-weight:bold; background:white; border-radius:4px; margin-top:2px; padding: 1px 3px; border: 1px solid #007bff;">${p.squadra}</div>
+                </div>`;
     };
+
     $('#surp-gk').html(formazioneSurp.gk.map(createSurpHTML).join(''));
     $('#surp-def').html(formazioneSurp.def.map(createSurpHTML).join(''));
     $('#surp-mid').html(formazioneSurp.mid.map(createSurpHTML).join(''));
@@ -1589,6 +1632,8 @@ function renderSurp11() {
     function filterRole(r, el) { $('.role-btn').removeClass('active'); $(el).addClass('active'); currentRole = r; renderTable(); }
 
     function renderTable() {
+    if (!database || database.length === 0) return;
+
     const filtrati = database.filter(p => {
         const tM = currentTeam === "TUTTE" || p.squadra === currentTeam;
         const rM = currentRole === "TUTTI" || p.ruolo === currentRole;
@@ -1597,92 +1642,56 @@ function renderSurp11() {
 
     let h = "";
     filtrati.forEach(p => {
+        // Pulizia dati immediata per evitare crash
+        const fmVal = parseFloat(String(p.fm).replace(',', '.')) || 0;
+        const mvVal = parseFloat(String(p.mv).replace(',', '.')) || 0;
+        const percVal = parseInt(p.percentuale) || 0;
+        
         const fotoUrl = String(p.foto || "").trim();
         const logoSquadra = LOGOS[p.squadra] || "";
         const ruoloClass = "bg-" + (p.ruolo ? p.ruolo.toLowerCase() : 'c');
         
-        const percVal = parseFloat(p.percentuale) || 0;
         const isConsigliato = (percVal >= 60 && !p.isEscluso);
-        
-        let consiglioCol = "#ff9800"; // ARANCIO per "Non consigliato"
-        let consiglioTesto = "⚠️ NON CONSIGLIATO";
-        
-        if (p.isEscluso) {
-            consiglioCol = "#ff4444";
-            consiglioTesto = "⛔ GIOCATORE OUT";
-        } else if (isConsigliato) {
-            consiglioCol = "var(--sisal-green)";
-            consiglioTesto = "✅ CONSIGLIATO";
-        }
+        let consiglioCol = p.isEscluso ? "#ff4444" : (isConsigliato ? "var(--sisal-green)" : "#ff9800");
+        let consiglioTesto = p.isEscluso ? "⛔ GIOCATORE OUT" : (isConsigliato ? "✅ CONSIGLIATO" : "⚠️ NON CONSIGLIATO");
 
-        // --- FIX LOGO/FOTO (Misure fisse per html2canvas) ---
-        let avatarHtml = "";
-        if (fotoUrl.toLowerCase().startsWith('http')) {
-            // Foto giocatore: usiamo un div di sfondo per evitare lo stretch
-            avatarHtml = `<div style="width:55px; height:55px; border-radius:50%; border:2px solid ${consiglioCol}; 
-                          background-image: url('${fotoUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>`;
-        } else {
-            // Logo squadra: cerchio bianco con logo centrato matematicamente
-            avatarHtml = `
-                <div style="width:55px; height:55px; border-radius:50%; background:white; border:2px solid ${consiglioCol}; 
-                            display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                    <img src="${logoSquadra}" style="width:38px; height:38px; object-fit:contain; flex-shrink:0;">
-                </div>`;
-        }
+        let avatarHtml = fotoUrl.toLowerCase().startsWith('http') 
+            ? `<div style="width:55px; height:55px; border-radius:50%; border:2px solid ${consiglioCol}; background-image: url('${fotoUrl}'); background-size: cover; background-position: center;"></div>`
+            : `<div style="width:55px; height:55px; border-radius:50%; background:white; border:2px solid ${consiglioCol}; display:flex; align-items:center; justify-content:center;"><img src="${logoSquadra}" style="width:38px; height:38px; object-fit:contain;"></div>`;
 
         h += `
-        <div class="player-row-vertical" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')" 
-             style="background: #161a1e; border: 1px solid #333; margin-bottom:12px; border-radius:18px; padding:15px; color:white;">
-            
+        <div class="player-row-vertical" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')" style="background: #161a1e; border: 1px solid #333; margin-bottom:12px; border-radius:18px; padding:15px; color:white;">
             <div style="display:flex; align-items:center; gap:15px; margin-bottom:12px;">
                 <div style="position:relative; width:55px; height:55px; flex-shrink:0;">
                     <div class="ruolo-badge ${ruoloClass}" style="position:absolute; top:-5px; left:-5px; width:22px; height:22px; border-radius:50%; font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:900; border:2px solid #161a1e; z-index:2;">${p.ruolo}</div>
                     ${avatarHtml}
                 </div>
-                
                 <div style="flex-grow:1;">
                     <div style="font-family:Oswald; font-size:19px; text-transform:uppercase; line-height:1.1;">${p.nome}</div>
                     <div style="display:flex; align-items:center; gap:5px; margin-top:3px;">
                         <img src="${logoSquadra}" style="width:14px; height:14px; object-fit:contain;">
-                        <span style="font-size:11px; color:#aaa; font-weight:600; text-transform:uppercase;">${p.squadra}</span>
+                        <span style="font-size:11px; color:#aaa; font-weight:600;">${p.squadra}</span>
                     </div>
                 </div>
-
                 <div style="text-align:center; background:rgba(255,255,255,0.05); padding:6px 12px; border-radius:12px; border:1px solid ${consiglioCol}; min-width:65px;">
-                    <div style="font-size:18px; font-weight:900; color:${consiglioCol};">${p.percentuale}%</div>
+                    <div style="font-size:18px; font-weight:900; color:${consiglioCol};">${percVal}%</div>
                     <div style="font-size:7px; font-weight:bold; color:white; opacity:0.5;">BONUS</div>
                 </div>
             </div>
-
             <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
-                <div style="background:rgba(255,255,255,0.03); padding:8px 4px; border-radius:10px; text-align:center;">
-                    <div style="font-size:8px; color:#666; font-weight:bold;">TIT.</div>
-                    <div style="font-size:14px; font-weight:800;">${p.titolarita}</div>
-                </div>
-                <div style="background:rgba(255,255,255,0.03); padding:8px 4px; border-radius:10px; text-align:center;">
-                    <div style="font-size:8px; color:#666; font-weight:bold;">FM</div>
-                    <div style="font-size:14px; font-weight:800; color:var(--sisal-green);">${p.fm.toFixed(1)}</div>
-                </div>
-                <div style="background:rgba(255,255,255,0.03); padding:8px 4px; border-radius:10px; text-align:center;">
-                    <div style="font-size:8px; color:#666; font-weight:bold;">MV</div>
-                    <div style="font-size:14px; font-weight:800;">${p.mv.toFixed(1)}</div>
-                </div>
-                <div style="background:rgba(255,255,255,0.03); padding:8px 4px; border-radius:10px; text-align:center;">
-                    <div style="font-size:8px; color:#666; font-weight:bold;">${p.ruolo==='P'?'GS':'GF'}</div>
-                    <div style="font-size:14px; font-weight:800;">${p.ruolo==='P'?p.gs:p.gf}</div>
-                </div>
-                
-                <div style="grid-column: span 4; background:${consiglioCol}; margin-top:4px; padding:8px; border-radius:8px; display:flex; align-items:center; justify-content:center;">
-                    <span style="font-size:11px; font-weight:900; color:black; text-transform:uppercase; letter-spacing:1px;">
-                        ${consiglioTesto}
-                    </span>
+                <div class="stat-mini-box"><div>TIT.</div><strong>${p.titolarita || '0%'}</strong></div>
+                <div class="stat-mini-box"><div>FM</div><strong style="color:var(--sisal-green)">${fmVal.toFixed(1)}</strong></div>
+                <div class="stat-mini-box"><div>MV</div><strong>${mvVal.toFixed(1)}</strong></div>
+                <div class="stat-mini-box"><div>${p.ruolo==='P'?'GS':'GF'}</div><strong>${p.ruolo==='P'?(p.gs||0):(p.gf||0)}</strong></div>
+                <div style="grid-column: span 4; background:${consiglioCol}; margin-top:4px; padding:8px; border-radius:8px; text-align:center;">
+                    <span style="font-size:11px; font-weight:900; color:black; text-transform:uppercase;">${consiglioTesto}</span>
                 </div>
             </div>
         </div>`;
     });
-
     $('#table-body').html(h);
 }
+
 
 
     function searchAdvice(val) {
@@ -1704,12 +1713,58 @@ function renderSurp11() {
         $('#team-advice-list').html(h);
     }
 
-    function loadTopFlopSection() {
-        let sorted = [...database].sort((a,b) => b.score - a.score);
-        $('#top-three').html(sorted.slice(0,3).map(p => buildCard(p, false)).join(''));
-        let flops = [...database].sort((a,b) => a.score - b.score);
-        $('#flop-three').html(flops.slice(0,3).map(p => buildCard(p, true)).join(''));
+        // --- NUOVA LOGICA SELEZIONE DIVERSIFICATA ---
+            function loadTopFlopSection() {
+        // --- 1. LOGICA TOP (Resta invariata, Min 60% titolarità) ---
+        let validTops = database.filter(p => {
+            const titVal = parseInt(String(p.titolarita || "0").replace(/[^0-9]/g, "")) || 0;
+            return !p.isEscluso && titVal >= 60;
+        });
+        validTops.sort((a, b) => (parseFloat(b.score) || 0) - (parseFloat(a.score) || 0));
+
+        let selectedTop = [];
+        let topRoles = new Set();
+        let topTeams = new Set();
+        for (let p of validTops) {
+            if (selectedTop.length === 3) break;
+            if (!topRoles.has(p.ruolo) && !topTeams.has(p.squadra)) {
+                selectedTop.push(p);
+                topRoles.add(p.ruolo);
+                topTeams.add(p.squadra);
+            }
+        }
+        $('#top-three').html(selectedTop.map(p => buildCard(p, false)).join(''));
+
+        // --- 2. NUOVA LOGICA FLOP (I "BIG" SCONSIGLIATI) ---
+        let validFlops = database.filter(p => {
+            const titVal = parseInt(String(p.titolarita || "0").replace(/[^0-9]/g, "")) || 0;
+            const fmVal = parseFloat(String(p.fm).replace(',', '.')) || 0;
+            
+            // FILTRO: Titolare (>=60%) E NON escluso
+            // IN PIÙ: Deve essere un giocatore di fascia (es. FM >= 6.0 o Ruolo non Portiere con FM discreta)
+            return !p.isEscluso && titVal >= 60 && fmVal >= 6.0; 
+        });
+        
+        // Ordiniamo per score crescente: tra i "buoni", prendiamo quelli con lo score peggiore oggi
+        validFlops.sort((a, b) => (parseFloat(a.score) || 0) - (parseFloat(b.score) || 0));
+
+        let selectedFlop = [];
+        let flopRoles = new Set();
+        let flopTeams = new Set();
+
+        for (let p of validFlops) {
+            if (selectedFlop.length === 3) break;
+            if (!flopRoles.has(p.ruolo) && !flopTeams.has(p.squadra)) {
+                selectedFlop.push(p);
+                flopRoles.add(p.ruolo);
+                flopTeams.add(p.squadra);
+            }
+        }
+        $('#flop-three').html(selectedFlop.map(p => buildCard(p, true)).join(''));
     }
+
+
+
 
 
 
@@ -1780,57 +1835,73 @@ function renderPlayerRow(p) {
 
 
 function buildCard(p, isFlop = false) {
-    if (!p) return "";
+    // 1. CONTROLLO ESISTENZA GIOCATORE
+    if (!p || !p.nome) {
+        console.error("Dati giocatore mancanti per buildCard");
+        return `<div style="color:white; padding:20px;">Errore caricamento dati giocatore.</div>`;
+    }
     
-    // 1. ID UNICO E STATS
-    const cardId = "card-" + p.nome.replace(/\s+/g, '-').toLowerCase();
+    // 2. ID UNICO E STATS (Protezione dai null)
+    const cardId = "card-" + String(p.nome).replace(/\s+/g, '-').toLowerCase();
     const s = p.stats ? p.stats : p;
     
-    // 2. TITOLARITÀ
+    // 3. TITOLARITÀ (Fix stringhe/numeri)
     let titDisplay = "0%";
     if (p.titolarita) titDisplay = p.titolarita;
     else if (p.stats && p.stats.titolarita) titDisplay = p.stats.titolarita;
     
-    const isP = p.ruolo === "P";
+    // 4. RUOLO E SQUADRA
+    const isP = String(p.ruolo).toUpperCase() === "P";
     const logoSquadra = LOGOS[p.squadra] || "";
+    const nomeSquadra = p.squadra || "SQUADRA";
     
-    // 3. FOTO E LOGO (Tua logica originale con fix fallback)
+    // 5. FOTO E LOGO (Gestione errori caricamento immagine)
     const fotoStr = String(p.foto || "").trim();
     let imgHtml = ""; 
     if (fotoStr.toLowerCase().startsWith('http')) {
-        imgHtml = `<img src="${fotoStr}" class="caricatura" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null; this.src='${logoSquadra}'; this.style.objectFit='contain'; this.parentElement.style.padding='18px'; this.parentElement.style.background='white';">`;
+        imgHtml = `<img src="${fotoStr}" class="caricatura" style="width:100%; height:100%; object-fit:cover;" 
+                    onerror="this.onerror=null; this.src='${logoSquadra}'; this.style.objectFit='contain'; this.parentElement.style.padding='18px'; this.parentElement.style.background='white';">`;
     } else {
         imgHtml = `<div style="display:flex; align-items:center; justify-content:center; height:100%; background:white; padding:18px; border-radius:50%; box-sizing:border-box;"><img src="${logoSquadra}" style="width:100%; height:100%; object-fit:contain;"></div>`;
     }
 
-    // 4. ALERT ESCLUSO
+    // 6. ALERT ESCLUSO
     const alertEscluso = p.isEscluso ? `<div style="background:rgba(0,0,0,0.8); color:#ff4444; font-size:11px; padding:8px; margin:10px 0; border:1px solid #ff4444; border-radius:10px; font-weight:bold; text-align:center;">⚠️ OUT: ${p.infoEscluso ? p.infoEscluso.motivo : 'Indisponibile'}</div>` : "";
 
-    // 5. GRIGLIA STATISTICHE
+    // 7. GRIGLIA STATISTICHE (Fix virgole nelle medie)
+    const formatStat = (val) => {
+        if (val === undefined || val === null) return 0;
+        return String(val).replace(',', '.');
+    };
+
     const statsHtml = isP ? `
         <div class="stat-item"><span class="stat-val">${s.pv || 0}</span>PV</div>
-        <div class="stat-item"><span class="stat-val">${s.mv || 0}</span>MV</div>
+        <div class="stat-item"><span class="stat-val">${formatStat(s.mv)}</span>MV</div>
         <div class="stat-item"><span class="stat-val">${s.gs || 0}</span>GS</div>
         <div class="stat-item"><span class="stat-val">${s.rp || 0}</span>RP</div>
         <div class="stat-item"><span class="stat-val">${s.amm || 0}</span>AMM</div>
         <div class="stat-item"><span class="stat-val">${s.esp || 0}</span>ESP</div>
     ` : `
         <div class="stat-item"><span class="stat-val">${s.pv || 0}</span>PV</div>
-        <div class="stat-item"><span class="stat-val">${s.mv || 0}</span>MV</div>
+        <div class="stat-item"><span class="stat-val">${formatStat(s.mv)}</span>MV</div>
         <div class="stat-item"><span class="stat-val">${s.gf || 0}</span>GOL</div>
         <div class="stat-item"><span class="stat-val">${s.ass || 0}</span>ASS</div>
         <div class="stat-item"><span class="stat-val">${s.amm || 0}</span>AMM</div>
         <div class="stat-item"><span class="stat-val">${s.esp || 0}</span>ESP</div>
     `;
 
-    // 6. LABEL PREVISIONE
+       // 8. LABEL PREVISIONE (Sincronizzata con Tabella)
     const label = p.previsione ? p.previsione.label : (isP ? "CLEAN SHEET" : "BONUS");
-    const perc = p.previsione ? p.previsione.percentuale : (p.percentuale ? p.percentuale + "%" : "0%");
+    // Prendiamo il valore direttamente dalla proprietà percentuale del database
+    let perc = (p.percentuale) ? p.percentuale + "%" : "0%";
 
-    // RITORNO HTML
+    if (p.previsione && p.previsione.percentuale) perc = p.previsione.percentuale;
+    else if (p.percentuale) perc = p.percentuale + "%";
+
+    // 9. RITORNO HTML (Sostituito innerHTML con stringa pulita)
     return `
         <div class="card ${isFlop ? 'flop' : ''}" id="${cardId}">
-            <div class="download-btn-card" onclick="event.stopPropagation(); downloadCardImage('${cardId}', 'Card_${p.nome}')">FICup</div>
+            <div class="download-btn-card" onclick="event.stopPropagation(); downloadCardImage('${cardId}', 'Card_${String(p.nome).replace(/'/g, "")}')">FICup</div>
             
             <div class="card-header">
                 <div class="header-ficup">FICUP</div>
@@ -1840,7 +1911,7 @@ function buildCard(p, isFlop = false) {
             <div class="circle-frame" style="background:white; overflow:hidden;">${imgHtml}</div>
 
             <div style="text-align:center;">
-                <div class="player-name">${p.nome.toUpperCase()}</div>
+                <div class="player-name">${String(p.nome).toUpperCase()}</div>
                 
                 <div class="tit-container" style="font-size:10px; font-weight:900; background:rgba(0,0,0,0.05); display:inline-block; padding:2px 8px; border-radius:10px;">
                     TITOLARITÀ: ${titDisplay}
@@ -1851,7 +1922,7 @@ function buildCard(p, isFlop = false) {
 
             <div class="team-box">
                 <img src="${logoSquadra}" class="team-logo-mini">
-                <div class="team-name-mini">${p.squadra.toUpperCase()}</div>
+                <div class="team-name-mini">${nomeSquadra.toUpperCase()}</div>
             </div>
 
             <div class="stats-grid">${statsHtml}</div>
@@ -2191,6 +2262,35 @@ function startAppWithLog() {
         }
     });
 }
+
+function showIndisponibili() {
+    // Filtriamo solo chi è escluso
+    const out = database.filter(p => p.isEscluso);
+    
+    let html = `
+        <div id="modal-out" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; padding:20px; overflow-y:auto;">
+            <button onclick="$('#modal-out').remove()" style="background:white; color:black; padding:10px 20px; border-radius:20px; font-weight:bold; float:right;">CHIUDI ✕</button>
+            <h2 style="color:#ff4444; font-family:Oswald; margin-top:40px;">LISTA INDISPONIBILI</h2>
+            <div style="display:grid; gap:10px; margin-top:20px;">
+    `;
+
+    if(out.length === 0) {
+        html += `<p style="color:white">Nessun indisponibile segnalato.</p>`;
+    } else {
+        out.forEach(p => {
+            html += `
+                <div style="background:#222; padding:15px; border-radius:12px; border-left:4px solid #ff4444;">
+                    <strong style="color:white; font-size:16px;">${p.nome.toUpperCase()}</strong><br>
+                    <span style="color:#aaa; font-size:12px;">${p.squadra} - ${p.infoEscluso ? p.infoEscluso.motivo : 'Non disponibile'}</span>
+                </div>
+            `;
+        });
+    }
+
+    html += `</div></div>`;
+    $('body').append(html);
+}
+
 // Funzione per il Login Admin
 function checkAdmin() {
     const pass = $('#admin-pass').val();
