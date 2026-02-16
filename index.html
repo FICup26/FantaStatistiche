@@ -1163,6 +1163,77 @@
     background: #000;
 }
 .team-bar::-webkit-scrollbar { display: none; }
+/* Container della Card Admin stile Evento */
+.admin-card-event {
+    background: linear-gradient(to bottom, #00c6ff, #0072ff); /* Blu come nelle foto */
+    border-radius: 15px;
+    padding: 20px;
+    position: relative;
+    color: white;
+    font-family: 'Arial Black', sans-serif;
+    text-align: center;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+/* Etichetta GOOOL! (verde come nelle immagini) */
+.badge-goool {
+    background: #4caf50;
+    color: white;
+    padding: 5px 20px;
+    font-size: 24px;
+    transform: rotate(-5deg);
+    position: absolute;
+    top: 20px;
+    left: 10px;
+    box-shadow: 3px 3px 0px rgba(0,0,0,0.2);
+}
+
+/* Il grande +3 o +1 */
+.bonus-value {
+    font-size: 60px;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-style: italic;
+    text-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+}
+
+/* Cerchio Bianco Grande per il Calciatore */
+.admin-photo-circle {
+    width: 180px;
+    height: 180px;
+    background: white;
+    border-radius: 50%;
+    margin: 40px auto 10px;
+    border: 5px solid rgba(255,255,255,0.3);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Nome Calciatore (Banda Bianca sotto) */
+.admin-player-banner {
+    background: white;
+    color: #0046a0;
+    padding: 10px;
+    width: 90%;
+    margin: 10px auto;
+    font-size: 28px;
+    font-style: italic;
+    transform: skew(-10deg); /* Inclinato come nelle foto */
+    font-weight: 900;
+}
+
+/* Squadra */
+.admin-team-label {
+    font-size: 20px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+
 
     </style>
 </head>
@@ -1442,7 +1513,7 @@
 
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwjkHveJIwA274YCB0u5c45nuDFwIweHpLQT6FHsSB400_Ohp8pIpldRhMNjFJvu-Ir/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwYYe4S6saxGznWwjzmMqQtoSc6Ky4_lPEGMUy8AxTsjGDFxEpuYYpYlbKinqIua8AklA/exec";
     let database = [];
     let currentTeam = "TUTTE";
     let currentRole = "TUTTI";
@@ -1744,55 +1815,86 @@ function renderSurp11() {
 
     let h = "";
     filtrati.forEach(p => {
-        // Pulizia dati immediata per evitare crash
-        const fmVal = parseFloat(String(p.fm).replace(',', '.')) || 0;
-        const mvVal = parseFloat(String(p.mv).replace(',', '.')) || 0;
-        const percVal = parseInt(p.percentuale) || 0;
+        // --- RECUPERO DATI INTELLIGENTE (Cerca maiuscole/minuscole e gestisce virgole) ---
+        const fmVal = parseFloat(String(p.fm || p.FM || 0).replace(',', '.')) || 0;
+        const mvVal = parseFloat(String(p.mv || p.MV || 0).replace(',', '.')) || 0;
+        const percVal = parseInt(p.percentuale || p.PERCENTUALE || 0) || 0;
         
+        // Recupero bonus/malus (fondamentale per non avere sempre 0)
+        const golFatti = p.gf || p.GF || p.gol || p.GOL || 0;
+        const assist = p.ass || p.ASS || p.assist || p.ASSIST || 0;
+        const ammonizioni = p.amm || p.AMM || p.ammonizioni || 0;
+        const espulsioni = p.esp || p.ESP || p.espulsioni || 0;
+        const golSubiti = p.gs || p.GS || 0;
+
         const fotoUrl = String(p.foto || "").trim();
         const logoSquadra = LOGOS[p.squadra] || "";
         const ruoloClass = "bg-" + (p.ruolo ? p.ruolo.toLowerCase() : 'c');
         
         const isConsigliato = (percVal >= 60 && !p.isEscluso);
-        let consiglioCol = p.isEscluso ? "#ff4444" : (isConsigliato ? "var(--sisal-green)" : "#ff9800");
+        let consiglioCol = p.isEscluso ? "#ff4444" : (isConsigliato ? "#adff2f" : "#ff9800");
         let consiglioTesto = p.isEscluso ? "⛔ GIOCATORE OUT" : (isConsigliato ? "✅ CONSIGLIATO" : "⚠️ NON CONSIGLIATO");
 
         let avatarHtml = fotoUrl.toLowerCase().startsWith('http') 
-            ? `<div style="width:55px; height:55px; border-radius:50%; border:2px solid ${consiglioCol}; background-image: url('${fotoUrl}'); background-size: cover; background-position: center;"></div>`
+            ? `<div style="width:55px; height:55px; border-radius:50%; border:2px solid ${consiglioCol}; background-image: url('${fotoUrl}'); background-size: cover; background-position: center; background-color: #fff;"></div>`
             : `<div style="width:55px; height:55px; border-radius:50%; background:white; border:2px solid ${consiglioCol}; display:flex; align-items:center; justify-content:center;"><img src="${logoSquadra}" style="width:38px; height:38px; object-fit:contain;"></div>`;
 
         h += `
-        <div class="player-row-vertical" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')" style="background: #161a1e; border: 1px solid #333; margin-bottom:12px; border-radius:18px; padding:15px; color:white;">
+        <div class="player-row-vertical" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')" style="background: #111; border: 1px solid #333; margin-bottom:15px; border-radius:20px; padding:15px; color:white; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+            
             <div style="display:flex; align-items:center; gap:15px; margin-bottom:12px;">
                 <div style="position:relative; width:55px; height:55px; flex-shrink:0;">
-                    <div class="ruolo-badge ${ruoloClass}" style="position:absolute; top:-5px; left:-5px; width:22px; height:22px; border-radius:50%; font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:900; border:2px solid #161a1e; z-index:2;">${p.ruolo}</div>
+                    <div class="ruolo-badge ${ruoloClass}" style="position:absolute; top:-5px; left:-5px; width:22px; height:22px; border-radius:50%; font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:900; border:2px solid #111; z-index:2;">${p.ruolo}</div>
                     ${avatarHtml}
                 </div>
                 <div style="flex-grow:1;">
-                    <div style="font-family:Oswald; font-size:19px; text-transform:uppercase; line-height:1.1;">${p.nome}</div>
+                    <div style="font-family:Oswald; font-size:20px; text-transform:uppercase; line-height:1.1; letter-spacing:0.5px;">${p.nome}</div>
                     <div style="display:flex; align-items:center; gap:5px; margin-top:3px;">
-                        <img src="${logoSquadra}" style="width:14px; height:14px; object-fit:contain;">
+                        <div style="width:16px; height:16px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; padding:2px;">
+                            <img src="${logoSquadra}" style="width:12px; height:12px; object-fit:contain;">
+                        </div>
                         <span style="font-size:11px; color:#aaa; font-weight:600;">${p.squadra}</span>
                     </div>
                 </div>
-                <div style="text-align:center; background:rgba(255,255,255,0.05); padding:6px 12px; border-radius:12px; border:1px solid ${consiglioCol}; min-width:65px;">
-                    <div style="font-size:18px; font-weight:900; color:${consiglioCol};">${percVal}%</div>
-                    <div style="font-size:7px; font-weight:bold; color:white; opacity:0.5;">BONUS</div>
+                <div style="text-align:center; background:rgba(173, 255, 47, 0.05); padding:6px 12px; border-radius:15px; border:1px solid ${consiglioCol}; min-width:70px;">
+                    <div style="font-size:20px; font-weight:900; color:${consiglioCol};">${percVal}%</div>
+                    <div style="font-size:8px; font-weight:bold; color:white; opacity:0.6; text-transform:uppercase;">Bonus</div>
                 </div>
             </div>
-            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
-                <div class="stat-mini-box"><div>TIT.</div><strong>${p.titolarita || '0%'}</strong></div>
-                <div class="stat-mini-box"><div>FM</div><strong style="color:var(--sisal-green)">${fmVal.toFixed(1)}</strong></div>
-                <div class="stat-mini-box"><div>MV</div><strong>${mvVal.toFixed(1)}</strong></div>
-                <div class="stat-mini-box"><div>${p.ruolo==='P'?'GS':'GF'}</div><strong>${p.ruolo==='P'?(p.gs||0):(p.gf||0)}</strong></div>
-                <div style="grid-column: span 4; background:${consiglioCol}; margin-top:4px; padding:8px; border-radius:8px; text-align:center;">
-                    <span style="font-size:11px; font-weight:900; color:black; text-transform:uppercase;">${consiglioTesto}</span>
+
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-bottom:10px;">
+                <div class="stat-mini-box" style="background:#1a1a1a; padding:8px; border-radius:10px; text-align:center; border:1px solid #222;">
+                    <div style="font-size:9px; color:#666;">TIT.</div>
+                    <div style="font-weight:bold; font-size:13px;">${p.titolarita || '0%'}</div>
                 </div>
+                <div class="stat-mini-box" style="background:#1a1a1a; padding:8px; border-radius:10px; text-align:center; border:1px solid #222;">
+                    <div style="font-size:9px; color:#666;">FM</div>
+                    <div style="font-weight:bold; font-size:13px; color:#adff2f;">${fmVal.toFixed(1)}</div>
+                </div>
+                <div class="stat-mini-box" style="background:#1a1a1a; padding:8px; border-radius:10px; text-align:center; border:1px solid #222;">
+                    <div style="font-size:9px; color:#666;">MV</div>
+                    <div style="font-weight:bold; font-size:13px;">${mvVal.toFixed(1)}</div>
+                </div>
+                <div class="stat-mini-box" style="background:#1a1a1a; padding:8px; border-radius:10px; text-align:center; border:1px solid #222;">
+                    <div style="font-size:9px; color:#666;">${p.ruolo==='P'?'GS':'GF'}</div>
+                    <div style="font-weight:bold; font-size:13px; color:${p.ruolo==='P'?'#ff4444':'#adff2f'};">${p.ruolo==='P'? golSubiti : golFatti}</div>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.03); padding:8px 15px; border-radius:10px; margin-bottom:10px; border: 1px dashed #333;">
+                <div style="text-align:center;"><span style="font-size:10px; color:#666;">ASSIST</span><br><strong style="color:#00e5ff">${assist}</strong></div>
+                <div style="text-align:center;"><span style="font-size:10px; color:#666;">AMM</span><br><strong style="color:#ffff00">${ammonizioni}</strong></div>
+                <div style="text-align:center;"><span style="font-size:10px; color:#666;">ESP</span><br><strong style="color:#ff4444">${espulsioni}</strong></div>
+            </div>
+
+            <div style="background:${consiglioCol}; padding:10px; border-radius:12px; text-align:center; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                <span style="font-size:12px; font-weight:900; color:black; text-transform:uppercase; letter-spacing:1px;">${consiglioTesto}</span>
             </div>
         </div>`;
     });
     $('#table-body').html(h);
 }
+
 
 
 
