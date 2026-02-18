@@ -1232,7 +1232,39 @@
     text-transform: uppercase;
     letter-spacing: 2px;
 }
+/* Effetto Oro per i titolari della Last 11 */
+.last-11-player {
+    background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+    border: 2px solid #5d4037; /* Bronzo scuro per il bordo */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    color: #3e2723; /* Testo marrone scuro per leggibilità */
+    font-weight: bold;
+    text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.5);
+}
 
+/* Badge del voto dell'ultima giornata (il circoletto col voto) */
+.last-voto-badge {
+    background: #5d4037; /* Bronzo */
+    color: #fcf6ba; /* Oro chiaro */
+    border: 1px solid #bf953f;
+}
+
+/* Stile per il pallino rosso live */
+.dot-live {
+    width: 6px;
+    height: 6px;
+    background: red;
+    border-radius: 50%;
+    margin-right: 5px;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
 
 
     </style>
@@ -1262,19 +1294,31 @@
     <div id="main-app">
     <div id="content-stats" class="content active" style="background: #000; min-height: 100vh;">
     
-    <div style="display: flex; justify-content: center; gap: 30px; padding: 25px 0; background: #000;">
-        <a href="https://chat.whatsapp.com/CHGf7PH7hsDJhrgWpzsWUU?mode=gi_t" target="_blank" style="text-decoration:none;">
-            <div class="social-box">
-                <img src="https://img.icons8.com/color/48/whatsapp--v1.png" alt="WhatsApp" style="width: 40px; height: 40px;">
-            </div>
-        </a>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 15px 10px; background: #000; border-bottom: 1px solid #222;">
+    
+    <div id="news-ticker" style="flex-grow: 1; background: #111; border: 1px solid #bf953f; border-radius: 6px; height: 44px; display: flex; align-items: center; overflow: hidden; position: relative; box-shadow: 0 0 15px rgba(191,149,63,0.4);">
         
-        <a href="https://www.tiktok.com/@fanta.italia.cup?_r=1&_t=ZN-93tUQfTjgyU" target="_blank" style="text-decoration:none;">
-            <div class="social-box">
-                <img src="https://img.icons8.com/color/48/tiktok--v1.png" alt="TikTok" style="width: 40px; height: 40px;">
+        <div style="background: #bf953f; color: #000; font-family: 'Arial Black', sans-serif; font-size: 9px; padding: 0 10px; height: 100%; display: flex; align-items: center; white-space: nowrap; font-weight: 900; z-index: 2;">
+            <span class="dot-live"></span>
+            TOP LAST
+        </div>
+        
+        <div style="flex-grow: 1; color: #fff; font-size: 13px; font-weight: 500; display: flex; align-items: center;">
+            <div id="ticker-top-players" style="width: 100%;">
+                <marquee scrollamount="5">Caricamento migliori dell'ultima giornata...</marquee>
             </div>
+        </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+        <a href="https://chat.whatsapp.com/CHGf7PH7hsDJhrgWpzsWUU?mode=gi_t" target="_blank">
+            <img src="https://img.icons8.com/color/48/whatsapp--v1.png" style="width: 22px; height: 22px;">
+        </a>
+        <a href="https://www.tiktok.com/@fanta.italia.cup?_r=1&_t=ZN-93tUQfTjgyU" target="_blank">
+            <img src="https://img.icons8.com/color/48/tiktok--v1.png" style="width: 22px; height: 22px;">
         </a>
     </div>
+</div>
 
     <h2 style="font-family: 'Oswald', sans-serif; color: #adff2f; text-align: center; margin: 0 0 20px 0; font-size: 26px; text-transform: uppercase; letter-spacing: 2px;">
         DATABASE GIOCATORI
@@ -1449,27 +1493,46 @@
     <h2 style="font-family:'Oswald'; color:var(--sisal-green); text-align:center; margin-bottom:5px;"></h2>
 
     <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 15px;">
-        <button id="btn-show-top" class="switch-btn active" onclick="togglePitch('top')">TOP</button>
-        <button id="btn-show-surp" class="switch-btn" onclick="togglePitch('surprise')">SURPRISE</button>
-        <button id="btn-show-flop" class="switch-btn" onclick="togglePitch('flop')">FLOP</button>
-    </div>
+    <button id="btn-show-top" class="switch-btn active" onclick="togglePitch('top')">TOP</button>
+    <button id="btn-show-surp" class="switch-btn" onclick="togglePitch('surprise')">SURPRISE</button>
+    <button id="btn-show-flop" class="switch-btn" onclick="togglePitch('flop')">FLOP</button>
+    <button id="btn-show-last" class="switch-btn" onclick="togglePitch('last')">LAST</button>
+</div>
 
-    <div id="wrapper-pitch-top">
-        <div class="stadium-container">
-            <div class="lights"></div>
-            <div class="football-pitch">
-                <div class="pitch-lines">
-    <div class="penalty-area"></div>
-    <div class="center-circle"></div>
-    <div class="penalty-area-bottom"></div> </div>
-
-                <div class="pitch-row" id="pitch-gk"></div>
-                <div class="pitch-row" id="pitch-def"></div>
-                <div class="pitch-row" id="pitch-mid"></div>
-                <div class="pitch-row" id="pitch-att"></div>
+<div id="wrapper-pitch-top">
+    <div class="stadium-container stadium-top">
+        <div class="lights"></div>
+        <div class="football-pitch">
+            <div class="pitch-lines">
+                <div class="penalty-area"></div>
+                <div class="center-circle"></div>
+                <div class="penalty-area-bottom"></div> 
             </div>
+            <div class="pitch-row" id="pitch-gk"></div>
+            <div class="pitch-row" id="pitch-def"></div>
+            <div class="pitch-row" id="pitch-mid"></div>
+            <div class="pitch-row" id="pitch-att"></div>
         </div>
     </div>
+</div>
+
+
+<div id="wrapper-pitch-last" style="display:none;">
+    <div class="stadium-container stadium-last" style="background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);">
+        <div class="lights"></div>
+        <div class="football-pitch">
+            <div class="pitch-lines">
+                <div class="penalty-area"></div>
+                <div class="center-circle"></div>
+                <div class="penalty-area-bottom"></div> 
+            </div>
+            <div class="pitch-row" id="last-gk"></div>
+            <div class="pitch-row" id="last-def"></div>
+            <div class="pitch-row" id="last-mid"></div>
+            <div class="pitch-row" id="last-att"></div>
+        </div>
+    </div>
+</div>
 
     <div id="wrapper-pitch-surp" style="display:none;">
         <div class="stadium-container stadium-surp">
@@ -1487,6 +1550,7 @@
             </div>
         </div>
     </div>
+    
 
     <div id="wrapper-pitch-flop" style="display:none;">
         <div class="stadium-container stadium-flop">
@@ -1513,7 +1577,7 @@
 
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwYYe4S6saxGznWwjzmMqQtoSc6Ky4_lPEGMUy8AxTsjGDFxEpuYYpYlbKinqIua8AklA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyS8XOD5USttMUZTBmiiIJ6nPqGCCmRtM0hrZ3lYdmkL0WqXI8j-MHAK6XBpRXYcskMTA/exec";
     let database = [];
     let currentTeam = "TUTTE";
     let currentRole = "TUTTI";
@@ -1563,8 +1627,8 @@
     if(tab === 'pitchflop') renderFlop11(); // Campo Rosso (Flop)
 }
 function togglePitch(type) {
-    // Nascondi tutti i wrapper
-    $('#wrapper-pitch-top, #wrapper-pitch-flop, #wrapper-pitch-surp').hide();
+    // Nascondi tutti i wrapper (aggiungi il nuovo ID qui)
+    $('#wrapper-pitch-top, #wrapper-pitch-flop, #wrapper-pitch-surp, #wrapper-pitch-last').hide();
     $('.switch-btn').removeClass('active');
     
     if (type === 'top') {
@@ -1575,12 +1639,17 @@ function togglePitch(type) {
         $('#wrapper-pitch-surp').show();
         $('#btn-show-surp').addClass('active');
         renderSurp11();
-    } else {
+    } else if (type === 'flop') {
         $('#wrapper-pitch-flop').show();
         $('#btn-show-flop').addClass('active');
         renderFlop11();
+    } else if (type === 'last') { // NUOVO CASO
+        $('#wrapper-pitch-last').show();
+        $('#btn-show-last').addClass('active');
+        renderLastBest11();
     }
 }
+
 
 
     function renderTop11() {
@@ -1757,6 +1826,72 @@ function renderSurp11() {
     $('#surp-att').html(formazioneSurp.att.map(createSurpHTML).join(''));
 }
 
+function renderLastBest11() {
+    const container = $('#wrapper-pitch-last .stadium-container');
+    container.attr('id', 'stadium-last-id');
+    container.find('.download-btn-card').remove();
+    container.prepend(`<div class="download-btn-card" onclick="event.stopPropagation(); downloadCardImage('stadium-last-id', 'Top11_Scorsa_Giornata')">✨</div>`);
+
+    if (!database || database.length === 0) return;
+
+    // Filtriamo chi ha preso un voto (FV > 0)
+    const playersConVoto = [...database].filter(p => {
+        const fv = parseFloat(String(p.fv || 0).replace(',', '.'));
+        return fv > 0;
+    });
+
+    // Ordiniamo per FantaVoto decrescente
+    playersConVoto.sort((a, b) => {
+        const fvA = parseFloat(String(a.fv || 0).replace(',', '.'));
+        const fvB = parseFloat(String(b.fv || 0).replace(',', '.'));
+        return fvB - fvA;
+    });
+
+    const formazioneLast = { gk: [], def: [], mid: [], att: [] };
+    
+    const pickBestByRole = (role, count) => {
+        const filtered = playersConVoto.filter(p => (p.ruolo || "").toUpperCase() === role.toUpperCase());
+        const key = role === 'P' ? 'gk' : (role === 'D' ? 'def' : (role === 'C' ? 'mid' : 'att'));
+        formazioneLast[key] = filtered.slice(0, count);
+    };
+
+    pickBestByRole('P', 1);
+    pickBestByRole('D', 3);
+    pickBestByRole('C', 4);
+    pickBestByRole('A', 3);
+
+        const createLastHTML = (p) => {
+        const logoSquadra = LOGOS[p.squadra] || "";
+        const fv = p.fv || "0";
+        let n = (p.nome || "Player").split(' ');
+        let nomeVisualizzato = (n.length > 1 && n[0].length <= 3) ? n[0] + " " + n[1] : n[0];
+        
+        // Definiamo gli stili Gold/Bronzo
+        const goldGradient = "linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c)";
+        const bronzeBorder = "1px solid #5d4037";
+
+        return `<div class="pitch-player" onclick="openPlayerCard('${p.nome.replace(/'/g, "\\'")}')">
+                    <img src="${logoSquadra}" class="pitch-player-img logo-fallback" 
+                         style="border: 2px solid #b38728; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                    
+                    <div class="pitch-player-name" 
+                         style="background: ${goldGradient}; color: #3e2723; font-weight: 900; border: ${bronzeBorder}; text-shadow: 0.5px 0.5px 0px rgba(255,255,255,0.5);">
+                         ${nomeVisualizzato.toUpperCase()}
+                    </div>
+                    
+                    <div style="font-size:10px; color:#fcf6ba; font-weight:900; background:#5d4037; border-radius:4px; margin-top:2px; padding: 1px 4px; border: 1px solid #bf953f; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                        FV: ${fv}
+                    </div>
+                </div>`;
+    };
+
+
+    $('#last-gk').html(formazioneLast.gk.map(createLastHTML).join(''));
+    $('#last-def').html(formazioneLast.def.map(createLastHTML).join(''));
+    $('#last-mid').html(formazioneLast.mid.map(createLastHTML).join(''));
+    $('#last-att').html(formazioneLast.att.map(createLastHTML).join(''));
+}
+
 
 
 
@@ -1770,6 +1905,10 @@ function renderSurp11() {
         success: function(data) {
             if(data && data.length > 0) {
                 database = data;
+                
+                  // --- AGGIUNGI QUESTA RIGA QUI ---
+                popolaTickerNews(); 
+                // -------------------------------
                 
                 // Svuota i loghi
                 $('#team-logos').empty(); 
@@ -2725,6 +2864,35 @@ function liveEdit(statName, change) {
 function resetAdminCard() {
     const nome = $('#admin-pSearch-card').val();
     if(nome) generateAdminCard(nome);
+}
+
+function popolaTickerNews() {
+    const ticker = document.getElementById('ticker-top-players');
+    if (!ticker || !database || database.length === 0) return;
+
+    const topLast = [...database]
+        .filter(p => p.fv && parseFloat(String(p.fv).replace(',', '.')) > 0)
+        .sort((a, b) => {
+            const fvA = parseFloat(String(a.fv).replace(',', '.'));
+            const fvB = parseFloat(String(b.fv).replace(',', '.'));
+            return fvB - fvA;
+        })
+        .slice(0, 10);
+
+    if (topLast.length > 0) {
+        const tickerText = topLast.map(p => {
+            const sq = p.squadra ? p.squadra.substring(0, 3).toUpperCase() : "??";
+            // Aggiungiamo un colore diverso per il voto e un separatore elegante
+            return ` 
+                <span style="color: #666; font-weight: bold;">•</span> 
+                <span style="font-weight: 800; color: #fff;">${p.nome.toUpperCase()}</span> 
+                <span style="background: #bf953f; color: #000; padding: 1px 4px; border-radius: 3px; font-weight: 900; margin-left: 4px;">${p.fv}</span>
+                <span style="color: #bf953f; font-size: 10px; margin-left: 3px;">${sq}</span>
+            `;
+        }).join(" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ");
+        
+        ticker.innerHTML = `<marquee scrollamount="6" behavior="scroll" direction="left" style="line-height: 44px;">${tickerText}</marquee>`;
+    }
 }
 
 
