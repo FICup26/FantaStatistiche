@@ -1291,6 +1291,8 @@
 </div>
 
 
+
+
     <div id="main-app">
     <div id="content-stats" class="content active" style="background: #000; min-height: 100vh;">
     
@@ -1577,7 +1579,7 @@
 
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyS8XOD5USttMUZTBmiiIJ6nPqGCCmRtM0hrZ3lYdmkL0WqXI8j-MHAK6XBpRXYcskMTA/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbweZ16v29yLTEDa4-Mha4GiJeaR4FjBghMTX1PIc5cw4ARlpxnvLGRnV0YQBpldllf-Dw/exec";
     let database = [];
     let currentTeam = "TUTTE";
     let currentRole = "TUTTI";
@@ -2655,33 +2657,82 @@ function startAppWithLog() {
     });
 }
 
-function showIndisponibili() {
-    // Filtriamo solo chi è escluso
-    const out = database.filter(p => p.isEscluso);
+function showIndisponibili(filtroCorrente = 'tutti') {
+    // 1. Filtro iniziale POTENZIATO
+    let out = database.filter(p => {
+        const esclusoDb = p.isEscluso === true || p.isSqualificato === true || (p.infoEscluso && p.infoEscluso.motivo);
+        const nomeMatch = p.nome.toUpperCase().includes("ORBAN"); 
+        return esclusoDb || (nomeMatch && p.isEscluso); 
+    });
+
+    // 2. Applichiamo il filtro specifico
+    if (filtroCorrente === 'infortunati') {
+        out = out.filter(p => (p.isEscluso || (p.infoEscluso && !p.infoEscluso.motivo.toLowerCase().includes('squalifica'))) && !p.isSqualificato);
+    } else if (filtroCorrente === 'squalificati') {
+        out = out.filter(p => p.isSqualificato || (p.infoEscluso && p.infoEscluso.motivo.toLowerCase().includes('squalifica')));
+    }
     
     let html = `
-        <div id="modal-out" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:99999; padding:20px; overflow-y:auto;">
-            <button onclick="$('#modal-out').remove()" style="background:white; color:black; padding:10px 20px; border-radius:20px; font-weight:bold; float:right;">CHIUDI ✕</button>
-            <h2 style="color:#ff4444; font-family:Oswald; margin-top:40px;">LISTA INDISPONIBILI</h2>
-            <div style="display:grid; gap:10px; margin-top:20px;">
+        <div id="modal-out" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,10,10,0.98); z-index:99999; padding:20px; overflow-y:auto; font-family: 'Arial', sans-serif;">
+            <div style="max-width: 800px; margin: 0 auto;">
+                <button onclick="$('#modal-out').remove()" style="background:#ff4444; color:white; border:none; padding:10px 20px; border-radius:30px; font-weight:bold; float:right; cursor:pointer; transition: 0.3s;">CHIUDI ✕</button>
+                
+                <h2 style="color:white; font-family:Oswald; font-size:28px; margin-bottom:20px;">GESTIONE ASSENZE</h2>
+
+                <div style="display:flex; gap:8px; margin-bottom:30px; background:#222; padding:8px; border-radius:50px; border: 1px solid #333; width: 100%; box-sizing: border-box;">
+    <button onclick="showIndisponibili('tutti')" 
+        style="flex:1; padding:12px 5px; border-radius:30px; border:none; cursor:pointer; font-weight:bold; font-size:12px; transition:all 0.3s; 
+        ${filtroCorrente === 'tutti' ? 'background:#ffd700; color:black; box-shadow: 0 0 15px rgba(255,215,0,0.3);' : 'background:transparent; color:white;'}">
+        TUTTI
+    </button>
+    
+    <button onclick="showIndisponibili('infortunati')" 
+        style="flex:1; padding:12px 5px; border-radius:30px; border:none; cursor:pointer; font-weight:bold; font-size:10px; transition:all 0.3s; 
+        ${filtroCorrente === 'infortunati' ? 'background:#ff4444; color:white; box-shadow: 0 0 15px rgba(255,68,68,0.3);' : 'background:transparent; color:white;'}">
+        🚑 INFORTUNI
+    </button>
+    
+    <button onclick="showIndisponibili('squalificati')" 
+        style="flex:1; padding:1px 5px; border-radius:30px; border:none; cursor:pointer; font-weight:bold; font-size:10px; transition:all 0.3s; 
+        ${filtroCorrente === 'squalificati' ? 'background:#ffae00; color:black; box-shadow: 0 0 15px rgba(255,174,0,0.3);' : 'background:transparent; color:white;'}">
+       🔴 SQUALIFICA
+    </button>
+</div>
+
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:15px;">
     `;
 
     if(out.length === 0) {
-        html += `<p style="color:white">Nessun indisponibile segnalato.</p>`;
+        html += `<p style="color:#aaa; text-align:center; grid-column: 1/-1; padding:40px;">Nessun giocatore trovato per questa categoria.</p>`;
     } else {
         out.forEach(p => {
+            const isSqualificato = p.isSqualificato || (p.infoEscluso && p.infoEscluso.motivo.toLowerCase().includes('squalifica'));
+            const color = isSqualificato ? "#ffae00" : "#ff4444";
+            const motivo = isSqualificato ? "SQUALIFICATO" : (p.infoEscluso ? p.infoEscluso.motivo : "INFORTUNATO");
+
             html += `
-                <div style="background:#222; padding:15px; border-radius:12px; border-left:4px solid #ff4444;">
-                    <strong style="color:white; font-size:16px;">${p.nome.toUpperCase()}</strong><br>
-                    <span style="color:#aaa; font-size:12px;">${p.squadra} - ${p.infoEscluso ? p.infoEscluso.motivo : 'Non disponibile'}</span>
+                <div style="background:#1a1a1a; padding:15px; border-radius:12px; border-top:4px solid ${color}; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <strong style="color:white; font-size:16px;">${p.nome.toUpperCase()}</strong>
+                        <span style="font-size:18px;">${isSqualificato ? '🟨' : '🚑'}</span>
+                    </div>
+                    <div style="color:#00d2ff; font-size:13px; margin:5px 0;">${p.squadra}</div>
+                    <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; color:#ddd; font-size:12px; margin-top:10px; font-style:italic;">
+                        ${motivo}
+                    </div>
                 </div>
             `;
         });
     }
 
-    html += `</div></div>`;
-    $('body').append(html);
+    html += `</div></div></div>`;
+    
+    const oldModal = document.getElementById('modal-out');
+    if(oldModal) oldModal.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', html);
 }
+
 
 function showAnalysis(nome) {
     $('#choice-modal').remove();
